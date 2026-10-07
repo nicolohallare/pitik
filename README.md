@@ -84,7 +84,8 @@ resend.com → add and verify your domain (`pitik.ph` or a subdomain) → API ke
 - Rider credit is reserved when checking out and released if the payment is cancelled or the checkout is abandoned. It can't be spent twice and it never pays for tips. A pitikero can't buy their own shots.
 - Each TechPay checkout link gets its own reference, made by the database. A late payment on an older link still settles; a second payment for the same order is flagged for refund under Admin → Orders.
 - Strava linking finishes inside the app as the signed-in rider, so a link someone else started can't attach your Strava to their account. Ride events are accepted only with Pitik's subscription id, and deletes are confirmed with Strava first.
-- "I passed around…" is limited to 2 looks per pitikero session and 6 a day, ±6 minutes each, so nobody can page through a whole morning.
+- "I passed around…" is limited to 2 looks per pitikero session and 6 a day, ±6 minutes each, counted in a log riders can't delete, so nobody can page through a whole morning.
+- Checkouts that fail to open the payment page, or sit unpaid for 2 hours, are cancelled and their credit returned (hourly job).
 - Every table starts with no access; the app gets exactly the columns it needs. Server-only functions can't be called from the browser.
 - Still to check in the TechPay sandbox: field names (`subtotal_amount`) and any status names besides `completed`, `cancelled`, `expired` and `failed`.
 
@@ -95,7 +96,7 @@ Late uploads: the ride's thinned track (one point every 5 s) is kept for `track_
 
 ## Tests
 ```
-cd dbtest && npm i && node test.mjs        # 66 checks, including the attacks found in review
+cd dbtest && npm i && node test.mjs        # 71 checks, including the attacks found in review
 cd web && npm i && npm run build
 ```
 

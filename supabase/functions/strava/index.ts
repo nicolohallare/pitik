@@ -145,8 +145,16 @@ Deno.serve(async (req) => {
       if (!acc) return;
       // Events are not signed, so anything destructive is confirmed with Strava first.
       if (ev.object_type === 'athlete' && (ev.updates as Record<string, string>)?.authorized === 'false') {
-        try { await accessToken({ ...acc, expires_at: new Date(0).toISOString() }); return; }   // refresh still works → not revoked
-        catch { await admin().from('strava_accounts').delete().eq('user_id', acc.user_id); }
+        // Only a clear "invalid grant" from Strava counts as revoked; outages and rate limits do not.
+        const r = await fetch('https://www.strava.com/oauth/token', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ client_id: env('STRAVA_CLIENT_ID'), client_secret: env('STRAVA_CLIENT_SECRET'), grant_type: 'refresh_token', refresh_token: acc.refresh_token }),
+        });
+        if (r.status === 400 || r.status === 401) await admin().from('strava_accounts').delete().eq('user_id', acc.user_id);
+        else if (r.ok) {
+          const j = await r.json();
+          await admin().from('strava_accounts').update({ access_token: j.access_token, refresh_token: j.refresh_token, expires_at: new Date(j.expires_at * 1000).toISOString() }).eq('user_id', acc.user_id);
+        }
         return;
       }
       if (ev.object_type !== 'activity') return;

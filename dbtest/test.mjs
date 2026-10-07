@@ -134,6 +134,9 @@ await as(R2, () => q(`select add_manual_pass($1, $2)`, [shoot.id, day + 'T07:05:
 await expectErr(as(R2, () => q(`select add_manual_pass($1, $2)`, [shoot.id, day + 'T07:12:00+08:00'])), 'third manual look at the same shoot is refused');
 await expectErr(as(R, () => q(`select add_manual_pass($1, $2)`, [shoot.id, day + 'T13:00:00+08:00'])), 'manual time far from the shoot is refused');
 
+await as(R2, () => q(`delete from rides where source='manual'`));
+await expectErr(as(R2, () => q(`select add_manual_pass($1, $2)`, [shoot.id, day + 'T07:12:00+08:00'])), 'deleting the ride does not reset the limit');
+
 console.log('order and payment');
 const pick = (await as(R, () => q(`select * from photos_for_pass($1)`, [pass2.id]))).slice(0, 2).map(r => r.id);
 const earliest = (await q(`select id from photos where pitikero_id=$1 order by taken_at limit 1`, [P]))[0].id;
@@ -205,6 +208,21 @@ const attC = (await q(`select start_order_payment($1,$2) r`, [R2, r2o.id]))[0].r
 await q(`select settle_gateway_payment($1, 0, 'expired', null, '{}'::jsonb)`, [attC]);
 ok((await q(`select status from orders where id=$1`, [r2o.id]))[0].status === 'cancelled', 'expired payment cancels the order');
 ok((await q(`select coalesce(sum(amount),0)::int s from credits where user_id=$1 and used_order_id is null`, [R2]))[0].s === credBefore, 'its credit is available again');
+
+console.log('failed payment page gives credit back');
+await q(`delete from credits where user_id=$1 and used_order_id is null`, [R2]); await q(`insert into credits (user_id, amount, reason) values ($1, 30, 'test')`, [R2]);
+const oF = (await as(R2, () => q(`select create_order($1::uuid[], '{}'::jsonb) r`, [r2photos.slice(4, 5)])))[0].r;
+const attF = (await q(`select start_order_payment($1,$2) r`, [R2, oF.id]))[0].r.reference;
+ok(Number(oF.credit_amount) > 0, 'order holds credit (' + oF.credit_amount + ')');
+await q(`select payment_link_failed($1)`, [attF]);
+ok((await q(`select status from orders where id=$1`, [oF.id]))[0].status === 'cancelled', 'order cancelled when the payment page fails');
+ok((await q(`select count(*)::int n from credits where used_order_id=$1`, [oF.id]))[0].n === 0, 'its credit is released');
+const oG = (await as(R2, () => q(`select create_order($1::uuid[], '{}'::jsonb) r`, [r2photos.slice(4, 5)])))[0].r;
+await q(`select start_order_payment($1,$2) r`, [R2, oG.id]);
+await q(`update orders set created_at = now() - interval '3 hours' where id=$1`, [oG.id]);
+await q(`update payment_attempts set created_at = now() - interval '3 hours' where order_id=$1`, [oG.id]);
+await q(`select expire_stale_orders(null)`);
+ok((await q(`select status from orders where id=$1`, [oG.id]))[0].status === 'cancelled' && (await q(`select count(*)::int n from credits where used_order_id=$1`, [oG.id]))[0].n === 0, 'a checkout left open for hours expires and frees its credit');
 
 console.log('kita and payouts');
 const kita = (await as(P, () => q(`select my_kita() r`)))[0].r;

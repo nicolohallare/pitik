@@ -59,9 +59,8 @@ Deno.serve(async (req) => {
       const j = await r.json().catch(() => ({}));
       const payUrl = j?.data?.web_payment_url ?? j?.data?.link_url;
       if (!payUrl) {
-        await admin().from('payment_attempts').update({ status: 'failed' }).eq('reference', reference);
-        await admin().from('orders').update({ admin_note: `Gateway would not create payment ${reference}: ${JSON.stringify(j?.errors ?? j?.message ?? r.status).slice(0, 300)}` })
-          .eq('id', order_id);
+        console.error('TechPay link failed', reference, JSON.stringify(j?.errors ?? j?.message ?? r.status).slice(0, 300));
+        await admin().rpc('payment_link_failed', { p_reference: reference });
         return json({ error: j?.message || 'The payment page would not open. Please try again.' }, 502);
       }
       await admin().from('orders').update({ is_test: HOST.includes('stg') }).eq('id', order_id);

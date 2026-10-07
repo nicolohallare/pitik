@@ -16,5 +16,5 @@ select cron.schedule('pitik-notify', '*/15 * * * *', $job$
     timeout_milliseconds := 55000);
 $job$);
 
--- Hourly: wipe ride tracks kept for late uploads (only pass moments are kept)
-select cron.schedule('pitik-purge-tracks', '17 * * * *', $job$ select public.purge_tracks(); $job$);
+-- Hourly: wipe ride tracks kept for late uploads (only pass moments are kept), and expire unpaid checkouts
+select cron.schedule('pitik-purge-tracks', '17 * * * *', $job$ select public.purge_tracks(); select public.expire_stale_orders(null); $job$);

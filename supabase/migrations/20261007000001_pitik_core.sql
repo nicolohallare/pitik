@@ -339,6 +339,17 @@ create or replace function public.thin_track(p jsonb) returns jsonb language sql
   ) x
 $$;
 
+-- Append-only record of manual looks and ride-file uploads, for limits (riders can't delete these)
+create table public.rider_lookups (
+  id bigint generated always as identity primary key,
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  kind text not null check (kind in ('manual','gpx')),
+  shoot_id uuid,
+  created_at timestamptz not null default now()
+);
+create index rider_lookups_user on public.rider_lookups (user_id, kind, created_at desc);
+alter table public.rider_lookups enable row level security;   -- server only
+
 -- Server (Strava) ingest: creates or replaces a ride and matches it
 create or replace function public.ingest_ride(p_user uuid, p_source text, p_activity bigint, p_name text,
   p_start timestamptz, p_end timestamptz, p_track jsonb) returns jsonb
@@ -369,9 +380,10 @@ language plpgsql security definer set search_path = public as $$
 declare me uuid := auth.uid(); s timestamptz; e timestamptz;
 begin
   if me is null then raise exception 'Please sign in again'; end if;
-  if (select count(*) from rides where user_id = me and source = 'gpx' and created_at > now() - interval '1 day') >= 10 then
+  if (select count(*) from rider_lookups where user_id = me and kind = 'gpx' and created_at > now() - interval '1 day') >= 10 then
     raise exception 'That is a lot of ride files today. Try again tomorrow.';
   end if;
+  insert into rider_lookups (user_id, kind) values (me, 'gpx');
   if jsonb_typeof(p_track) <> 'array' or jsonb_array_length(p_track) < 10 then raise exception 'That ride file has too few points'; end if;
   if jsonb_array_length(p_track) > 40000 then raise exception 'That ride file is too long'; end if;
   select min((x->>'t')::timestamptz), max((x->>'t')::timestamptz) into s, e from jsonb_array_elements(p_track) x;
@@ -389,12 +401,13 @@ begin
   if p_at < coalesce(s.first_shot_at, s.checked_in_at) - interval '30 minutes' or p_at > coalesce(s.last_shot_at, s.checked_in_at) + interval '30 minutes' then
     raise exception 'That time is outside when this pitikero was shooting';
   end if;
-  if (select count(*) from passes where user_id = me and shoot_id = p_shoot and manual) >= 2 then
+  if (select count(*) from rider_lookups where user_id = me and kind = 'manual' and shoot_id = p_shoot) >= 2 then
     raise exception 'You already looked twice at this pitikero''s shots. For more, connect Strava or upload your ride file.';
   end if;
-  if (select count(*) from passes where user_id = me and manual and created_at > now() - interval '1 day') >= 6 then
+  if (select count(*) from rider_lookups where user_id = me and kind = 'manual' and created_at > now() - interval '1 day') >= 6 then
     raise exception 'That is the limit for today. Connect Strava or upload your ride file to see more.';
   end if;
+  insert into rider_lookups (user_id, kind, shoot_id) values (me, 'manual', p_shoot);
   select id into rid from rides where user_id = me and source = 'manual' and (started_at at time zone 'Asia/Manila')::date = d limit 1;
   if rid is null then
     insert into rides (user_id, source, name, started_at, ended_at) values (me, 'manual', 'Ride', p_at, p_at) returning id into rid;
@@ -575,6 +588,45 @@ create or replace function public.release_credits(p_order uuid) returns void lan
   update credits set used_order_id = null where used_order_id = p_order
 $$;
 
+-- Cancel pending orders that can no longer be paid, and give their credit back:
+--   • never reached the payment page and older than 2 minutes (another tab may be mid-checkout)
+--   • every payment link failed, was cancelled or expired
+--   • the newest payment link is older than 2 hours (TechPay links expire well before that)
+-- A payment that still completes later is held for review if its credit was released.
+create or replace function public.expire_stale_orders(p_user uuid default null) returns int
+language plpgsql security definer set search_path = public as $$
+declare c record; n int := 0;
+begin
+  for c in select o.id from orders o
+           where o.status = 'pending' and (p_user is null or o.user_id = p_user)
+             and o.created_at < now() - interval '2 minutes'
+             and (
+               not exists (select 1 from payment_attempts a where a.order_id = o.id)
+               or not exists (select 1 from payment_attempts a where a.order_id = o.id and a.status = 'pending')
+               or (select max(a.created_at) from payment_attempts a where a.order_id = o.id) < now() - interval '2 hours')
+           for update of o skip locked
+  loop
+    update orders set status = 'cancelled', admin_note = coalesce(admin_note || ' | ', '') || 'Checkout expired' where id = c.id;
+    update payment_attempts set status = 'expired' where order_id = c.id and status = 'pending';
+    perform release_credits(c.id);
+    n := n + 1;
+  end loop;
+  return n;
+end $$;
+
+-- The payment page could not be opened: cancel and give the credit back (called by the techpay function)
+create or replace function public.payment_link_failed(p_reference text) returns void
+language plpgsql security definer set search_path = public as $$
+declare oid uuid;
+begin
+  update payment_attempts set status = 'failed' where reference = p_reference returning order_id into oid;
+  if oid is not null and not exists (select 1 from payment_attempts where order_id = oid and status = 'pending') then
+    update orders set status = 'cancelled', admin_note = coalesce(admin_note || ' | ', '') || 'Payment page did not open'
+    where id = oid and status = 'pending';
+    perform release_credits(oid);
+  end if;
+end $$;
+
 -- Order creation: the server works out prices, fee and credit, and reserves the credit.
 -- The browser only says which photos and how much to tip.
 create or replace function public.create_order(p_photo_ids uuid[], p_tips jsonb default '{}'::jsonb) returns jsonb
@@ -595,12 +647,8 @@ begin
     raise exception 'Some of those photos are not from your ride';
   end if;
 
-  -- Abandoned checkouts that never reached the payment page give their credit back
-  for c in select o.id from orders o where o.user_id = me and o.status = 'pending'
-           and not exists (select 1 from payment_attempts a where a.order_id = o.id) loop
-    perform release_credits(c.id);
-    update orders set status = 'cancelled', admin_note = 'Replaced by a newer checkout' where id = c.id;
-  end loop;
+  -- Older checkouts that can no longer be paid give their credit back
+  perform expire_stale_orders(me);
 
   insert into orders (user_id, photos_amount, total) values (me, 0, 0) returning id into oid;
   insert into order_items (order_id, photo_id, pitikero_id, price)
