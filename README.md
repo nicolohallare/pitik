@@ -86,7 +86,7 @@ Late uploads: the ride's thinned track (one point every 5 s) is kept for `track_
 
 ## Tests
 ```
-cd dbtest && npm i && node test.mjs        # 44 checks: matching, RLS, orders, idempotent settle, payouts, notifications
+cd dbtest && npm i && node test.mjs        # 40+ checks: matching, RLS, orders, idempotent settle, payouts, notifications
 cd web && npm i && npm run build
 ```
 
