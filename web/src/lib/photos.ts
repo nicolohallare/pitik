@@ -5,7 +5,7 @@ import exifr from 'exifr';
 
 export type ShotCheck =
   | { ok: true; file: File; cameraTime: number; camera: string | null; gps: { lat: number; lon: number } | null; key: string }
-  | { ok: false; file: File; reason: 'raw' | 'no-time' | 'not-image' | 'unreadable' };
+  | { ok: false; file: File; reason: 'raw' | 'heic' | 'no-time' | 'not-image' | 'unreadable' };
 
 const RAW = /\.(cr2|cr3|nef|nrw|arw|srf|sr2|raf|orf|rw2|pef|dng|3fr|iiq)$/i;
 
@@ -22,6 +22,7 @@ function exifToMs(s: unknown, sub?: unknown, offset?: unknown): number | null {
 
 export async function checkShot(file: File): Promise<ShotCheck> {
   if (RAW.test(file.name)) return { ok: false, file, reason: 'raw' };
+  if (/\.hei[cf]$/i.test(file.name) || /image\/hei[cf]/i.test(file.type)) return { ok: false, file, reason: 'heic' };
   if (file.type && !/^image\/(jpeg|jpg|heic|heif)$/i.test(file.type) && !/\.(jpe?g|heic)$/i.test(file.name)) return { ok: false, file, reason: 'not-image' };
   try {
     const ex = await exifr.parse(file, { reviveValues: false, gps: true, pick: ['DateTimeOriginal', 'CreateDate', 'SubSecTimeOriginal', 'OffsetTimeOriginal', 'Make', 'Model', 'GPSLatitude', 'GPSLongitude', 'GPSLatitudeRef', 'GPSLongitudeRef'] });
@@ -89,6 +90,7 @@ export async function prepareShot(file: File, label: string) {
 export const reasonText: Record<string, string> = {
   'no-time': 'walang oras ng camera, hindi isinama. Kadalasan galing ito sa Messenger, FB, Viber o screenshot. Kunin ang original sa SD card o sa camera app.',
   raw: 'RAW file, hindi isinama. JPEG ang i-upload.',
+  heic: 'HEIC file, hindi isinama. I-set ang camera o phone sa JPEG (Most Compatible).',
   'not-image': 'hindi litrato (JPEG lang).',
   unreadable: 'hindi mabasa ang file.',
 };

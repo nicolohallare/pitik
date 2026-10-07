@@ -27,7 +27,7 @@ If Claude already set it up, skip to step 2. Otherwise:
 1. Create project **pitik**, region **Southeast Asia (Singapore)**.
 2. SQL editor: run `supabase/migrations/20261007000001_pitik_core.sql`, then `…02_storage.sql`, then `…03_cron.sql` **after replacing `__PROJECT_REF__`** with the project ref (the part before `.supabase.co`).
 3. **Authentication → Providers → Email**: enabled, "Confirm email" on.
-4. **Authentication → Email templates → Magic Link**: add the code so people can type it, e.g.
+4. **Authentication → Email templates**: in BOTH **Confirm signup** (first sign-in) and **Magic Link** (later sign-ins), add the code so people can type it. Typing the code works even when the email opens inside Gmail's own browser, where a tapped link can fail:
    `<p>Your Pitik code: <b>{{ .Token }}</b></p><p>Or tap: <a href="{{ .ConfirmationURL }}">Sign in</a></p>`
 5. **Authentication → URL configuration**: Site URL = your app URL (e.g. `https://pitik.vercel.app`), and add `https://pitik.vercel.app/**` (plus your own domain later) to Redirect URLs.
 6. **Authentication → SMTP**: use Resend (step 4). The built-in mailer sends only a handful of emails per hour.
@@ -54,7 +54,7 @@ Also run: `update app_config set value = 'https://pitik.vercel.app' where key = 
 1. You need a **Strava subscription** on the account that owns the app (required for new developers since June 2026).
 2. strava.com/settings/api → create **Pitik**. Authorization Callback Domain: `<ref>.supabase.co`.
 3. Copy the Client ID and Secret into the function secrets.
-4. In Pitik, go to **Admin → Orders → "Turn on the Strava ride feed"** (one time).
+4. In Pitik, go to **Admin → Orders → "Turn on the Strava ride feed"** (one time). Pitik saves the subscription id and ignores ride events that don't carry it.
 5. **Capacity:** a new Strava app connects only **1 athlete**. You can raise it to **10** yourself in the Strava developer settings, which is enough for the trial. Beyond 10 needs Strava's review (up to 9,999), with no guaranteed timeline. **Apply as soon as the trial starts.** Until then, other riders use the GPX upload or "I passed around…", which already work.
 6. Strava rules Pitik follows: ride data is shown only to the rider it belongs to, routes are deleted within 3 days (Strava allows 7), and no AI use of Strava data.
 
@@ -73,20 +73,29 @@ resend.com → add and verify your domain (`pitik.ph` or a subdomain) → API ke
 - Orders fully covered by credit settle without TechPay.
 
 ### 7. First pitikeros
-- They sign in with email, tap **Pitikero ako**, and enter name, price and GCash.
-- Mark founders: `update pitikeros set founding = true where handle in ('…');`
+- They sign in with email, tap **Pitikero ako**, and enter name, price and GCash. They can check in and upload right away.
+- **Admin → Payouts → Activate** makes their shots visible to riders. **Mark founding** gives the founding badge. New sign-ups stay hidden until you activate them, so nobody can set up a fake pitikero to farm rider credits.
 - Trial allowance (₱300 per Sunday) and referrals: **Admin → Extras & credits**.
 
 ---
 
+## Security notes (from the independent review, all fixed and tested)
+- Storage paths for photos are set by the database from the photo id, never by the browser, so a photo row can't point at someone else's original.
+- Rider credit is reserved when checking out and released if the payment is cancelled or the checkout is abandoned. It can't be spent twice and it never pays for tips. A pitikero can't buy their own shots.
+- Each TechPay checkout link gets its own reference, made by the database. A late payment on an older link still settles; a second payment for the same order is flagged for refund under Admin → Orders.
+- Strava linking finishes inside the app as the signed-in rider, so a link someone else started can't attach your Strava to their account. Ride events are accepted only with Pitik's subscription id, and deletes are confirmed with Strava first.
+- "I passed around…" is limited to 2 looks per pitikero session and 6 a day, ±6 minutes each, so nobody can page through a whole morning.
+- Every table starts with no access; the app gets exactly the columns it needs. Server-only functions can't be called from the browser.
+- Still to check in the TechPay sandbox: field names (`subtotal_amount`) and any status names besides `completed`, `cancelled`, `expired` and `failed`.
+
 ## How matching works
-`match_ride()` in the core migration. For each pitikero shoot active that day, it takes the ride's points within the shooting window (first shot −15 min to last shot +15 min) and within `pass_radius_m` (250 m) of the pin. It groups consecutive points into passes (a gap of more than 2 minutes starts a new pass, so hill repeats count twice) and records the closest moment of each. Riders see shots within ±3 minutes by default (1/3/10 to choose; ±10 for a typed-in time).
+`match_ride()` in the core migration. For each pitikero shoot active that day, it takes the ride's points within the shooting window (first shot −15 min to last shot +15 min) and within `pass_radius_m` (250 m) of the pin. It groups consecutive points into passes (a gap of more than 2 minutes starts a new pass, so hill repeats count twice) and records the closest moment of each, plus how long the rider was right at the spot (within 60 m), so a rider who stops for a photo or a drink sees the whole stop. Riders see shots within ±3 minutes by default (1/3/10 to choose; ±10 for a typed-in time).
 
 Late uploads: the ride's thinned track (one point every 5 s) is kept for `track_keep_hours` (72), so shots uploaded that night still match. A nightly job deletes it. A clock-check correction re-times every shot and re-matches automatically.
 
 ## Tests
 ```
-cd dbtest && npm i && node test.mjs        # 40+ checks: matching, RLS, orders, idempotent settle, payouts, notifications
+cd dbtest && npm i && node test.mjs        # 66 checks, including the attacks found in review
 cd web && npm i && npm run build
 ```
 

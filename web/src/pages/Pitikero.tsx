@@ -17,6 +17,8 @@ export default function Pitikero() {
         <div><span className="who">ang pitikero</span><h1>{pitikero.name}</h1></div>
         {pitikero.founding && <span className="badge sun">Founding pitikero</span>}
       </div>
+      {pitikero.status === 'pending' && <p className="msg">Salamat sa pagsali! The Pitik team will activate your account soon. You can already check in and upload; riders see your shots once you're active.</p>}
+      {pitikero.status === 'paused' && <p className="msg err">Your account is paused. Riders can't see your shots right now. Message the Pitik team.</p>}
       <Seg label="Section" value={tab} onChange={setTab} options={[
         { v: 'today', label: 'Ngayon' }, { v: 'kita', label: 'Kita' }, { v: 'bayad', label: 'Bayad' }, { v: 'profile', label: 'Profile' }]} />
       {tab === 'today' && <Today pk={pitikero} />}
@@ -286,7 +288,9 @@ function Bayad() {
           {p.gcash_ref && <span className="note">GCash ref {p.gcash_ref}</span>}
           {p.note && <span className="note">{p.note}</span>}
           {p.receipt_path && (open[p.receipt_path]
-            ? <img src={open[p.receipt_path]} alt="GCash receipt" style={{ borderRadius: 12 }} />
+            ? (/\.pdf$/i.test(p.receipt_path)
+              ? <a className="link" href={open[p.receipt_path]} target="_blank" rel="noreferrer">Open receipt (PDF)</a>
+              : <img src={open[p.receipt_path]} alt="GCash receipt" style={{ borderRadius: 12 }} />)
             : <button className="link" onClick={() => receipt(p.receipt_path!)}>View receipt</button>)}
         </div>
       ))}

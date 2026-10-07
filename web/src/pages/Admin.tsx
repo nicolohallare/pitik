@@ -4,7 +4,7 @@ import { useAuth } from '../lib/auth';
 import { callFn, errText, supabase } from '../lib/supabase';
 import { day, peso, time } from '../lib/format';
 
-type Bal = { id: string; name: string; handle: string; gcash_number: string | null; gcash_name: string | null; founding: boolean; status: string;
+type Bal = { id: string; name: string; handle: string; gcash_number: string | null; gcash_name: string | null; founding: boolean; status: string; photos: number;
   unpaid: number; unpaid_sales: number; unpaid_tips: number; unpaid_extras: number; last_paid_at: string | null };
 
 export default function Admin() {
@@ -39,6 +39,10 @@ function useBalances() {
 function Payouts() {
   const { rows, err, load } = useBalances();
   const [open, setOpen] = useState<string | null>(null);
+  async function setStatus(id: string, status: string | null, founding: boolean | null) {
+    await supabase.rpc('admin_set_pitikero', { p_pitikero: id, p_status: status, p_founding: founding });
+    load();
+  }
   if (!rows) return <><p className="note">Loading…</p><Msg text={err} kind="err" /></>;
   const due = rows.filter((r) => Number(r.unpaid) >= 200);
   return (
@@ -53,7 +57,13 @@ function Payouts() {
           <tbody>
             {rows.map((r) => (
               <tr key={r.id}>
-                <td><b>{r.name}</b>{r.founding ? ' ★' : ''}<div className="note">@{r.handle}</div></td>
+                <td><b>{r.name}</b>{r.founding ? ' ★' : ''}<div className="note">@{r.handle} · {r.photos} shots</div>
+                  <div className="row" style={{ gap: 4, marginTop: 4 }}>
+                    {r.status !== 'active'
+                      ? <button className="btn green small inline" onClick={() => setStatus(r.id, 'active', null)}>{r.status === 'pending' ? 'Activate' : 'Resume'}</button>
+                      : <button className="link" onClick={() => setStatus(r.id, 'paused', null)}>Pause</button>}
+                    <button className="link" onClick={() => setStatus(r.id, null, !r.founding)}>{r.founding ? 'Unmark founding' : 'Mark founding'}</button>
+                  </div></td>
                 <td className="num">{r.gcash_number}<div className="note">{r.gcash_name}</div></td>
                 <td className="num">{peso(r.unpaid_sales)}</td>
                 <td className="num">{peso(r.unpaid_tips)}</td>

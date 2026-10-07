@@ -47,8 +47,8 @@ export async function stravaPut(acc: StravaAccount, path: string, body: unknown)
 const OUTDOOR = /ride|cycl|bike|gravel|mountain|handcycle|velomobile/i;
 
 /** Pull one activity's route and record the moments it passed a pitikero. Keeps only a thinned track, briefly. */
-export async function processActivity(acc: StravaAccount, activityId: number) {
-  const a = await stravaGet(acc, `/activities/${activityId}`);
+export async function processActivity(acc: StravaAccount, activityId: number, summary?: Record<string, any>) {
+  const a = summary ?? await stravaGet(acc, `/activities/${activityId}`);
   if (!a) return { skipped: 'not found' };
   const type = String(a.sport_type ?? a.type ?? '');
   if (a.trainer || /virtual/i.test(type) || !OUTDOOR.test(type)) return { skipped: 'not an outdoor ride' };

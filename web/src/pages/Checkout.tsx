@@ -29,7 +29,7 @@ export default function Checkout() {
   const photos = items.reduce((a, i) => a + i.price, 0);
   const tips = [...byPk.keys()].reduce((a, k) => a + tipOf(k), 0);
   const fee = Math.min(items.length * cfg.per, cfg.cap);
-  const used = Math.min(credit, photos + tips + fee);
+  const used = Math.min(credit, photos + fee);   // credit covers photos and the Pitik fee, not tips
   const total = photos + tips + fee - used;
 
   async function pay() {

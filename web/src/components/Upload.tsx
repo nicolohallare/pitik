@@ -82,7 +82,7 @@ export function Upload({ shoot, uid, label, onUploaded }: { shoot: Shoot; uid: s
     <div className="stack">
       <div className="pick">
         <div className="btn" aria-hidden="true">{shoot.photo_count ? 'Add more shots' : "Load this morning's shots"}</div>
-        <input type="file" accept="image/jpeg,image/heic,.jpg,.jpeg,.heic" multiple disabled={phase === 'checking' || phase === 'uploading'}
+        <input type="file" accept="image/jpeg,.jpg,.jpeg" multiple disabled={phase === 'checking' || phase === 'uploading'}
           aria-label="Choose shots to upload" onChange={(e) => { const fs = Array.from(e.target.files ?? []); e.target.value = ''; run(fs); }} />
       </div>
       <p className="note">Original files lang, mula sa SD card o sa camera app. Mas mabilis sa WiFi. Pwede mong isara at ituloy mamaya, hindi madodoble.</p>

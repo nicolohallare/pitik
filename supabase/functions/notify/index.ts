@@ -92,7 +92,10 @@ Deno.serve(async (req) => {
       catch (e) { out.email = 'failed: ' + (e as Error).message; }
     }
 
-    await admin().rpc('mark_notified', { p_ride: r.ride_id, p_line: line });
+    // If every channel we tried failed, try again on the next run (gives up after 4 tries)
+    const tried = [out.strava, out.email].filter((v) => v !== undefined && v !== 'no write permission' && !String(v).startsWith('skipped'));
+    const anyOk = !tried.length || tried.some((v) => v === 'updated' || v === 'sent');
+    await admin().rpc('mark_notified', { p_ride: r.ride_id, p_line: line, p_ok: anyOk });
     results.push(out);
   }
   return json({ ok: true, count: results.length, results });

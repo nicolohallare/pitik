@@ -35,6 +35,23 @@ export default function Rider() {
       setCredit((data ?? []).reduce((a: number, r: { amount: number }) => a + Number(r.amount), 0)));
   }, []);
 
+  // Back from Strava: finish linking as the signed-in rider
+  useEffect(() => {
+    const code = sp.get('strava_code');
+    if (!code) return;
+    const body = { code, state: sp.get('strava_state'), scope: sp.get('strava_scope') };
+    ['strava_code', 'strava_state', 'strava_scope'].forEach((k) => sp.delete(k));
+    setSp(sp, { replace: true });
+    setMsg({ t: 'Connecting Strava…' });
+    callFn<{ athlete_name: string; write_ok: boolean }>('strava', 'link', body)
+      .then((r) => {
+        setStrava({ athlete_name: r.athlete_name, write_ok: r.write_ok });
+        setMsg({ t: 'Strava connected. Bringing in your rides from the last 7 days…', k: 'ok' });
+        setTimeout(load, 5000); setTimeout(load, 15000);
+      })
+      .catch((e) => setMsg({ t: errText(e), k: 'err' }));
+  }, [sp, setSp, load]);
+
   useEffect(() => {
     const s = sp.get('strava');
     if (!s) return;

@@ -2,7 +2,7 @@
 //   POST ?action=start    (rider JWT) { order_id } → { pay_url }
 //   POST ?action=webhook  (from TechPay)           → verify by calling TechPay back, then settle once
 // Deploy with verify_jwt = false. Secrets: TECHPAY_HOST, TECHPAY_USER, TECHPAY_PASS, TECHPAY_SIGNATURE_KEY, APP_URL.
-import { admin, appUrl, asUser, CORS, currentUser, env, hmacHex, json } from '../_shared/util.ts';
+import { admin, appUrl, CORS, currentUser, env, hmacHex, json } from '../_shared/util.ts';
 
 const HOST = env('TECHPAY_HOST', 'api-stg.techpay.com.ph');
 const FN_URL = `${env('SUPABASE_URL')}/functions/v1/techpay`;
@@ -40,9 +40,10 @@ Deno.serve(async (req) => {
       const user = await currentUser(req);
       if (!user) return json({ error: 'Please sign in again' }, 401);
       const { order_id } = await req.json();
-      const reference = `${REF_PREFIX}${Date.now().toString(36).toUpperCase()}${crypto.randomUUID().slice(0, 4).toUpperCase()}`;
-      const { data: started, error } = await asUser(req).rpc('start_order_payment', { p_order: order_id, p_reference: reference });
+      // The database makes the reference and records the attempt (the browser never chooses either)
+      const { data: started, error } = await admin().rpc('start_order_payment', { p_user: user.id, p_order: order_id });
       if (error) return json({ error: error.message }, 400);
+      const reference = String((started as { reference: string }).reference);
       const amount = Number((started as { amount: number }).amount);
       const app = await appUrl();
       const t = await token();
@@ -58,12 +59,12 @@ Deno.serve(async (req) => {
       const j = await r.json().catch(() => ({}));
       const payUrl = j?.data?.web_payment_url ?? j?.data?.link_url;
       if (!payUrl) {
-        await admin().from('orders').update({ status: 'cancelled', gateway_status: 'failed',
-          admin_note: `Gateway would not create the payment: ${JSON.stringify(j?.errors ?? j?.message ?? r.status)}` })
-          .eq('gateway_ref', reference);
+        await admin().from('payment_attempts').update({ status: 'failed' }).eq('reference', reference);
+        await admin().from('orders').update({ admin_note: `Gateway would not create payment ${reference}: ${JSON.stringify(j?.errors ?? j?.message ?? r.status).slice(0, 300)}` })
+          .eq('id', order_id);
         return json({ error: j?.message || 'The payment page would not open. Please try again.' }, 502);
       }
-      await admin().from('orders').update({ gateway_payload: j?.data ?? null, is_test: HOST.includes('stg') }).eq('gateway_ref', reference);
+      await admin().from('orders').update({ is_test: HOST.includes('stg') }).eq('id', order_id);
       return json({ ok: true, reference, pay_url: payUrl, expires_at: j?.data?.link_expires_at ?? null });
     } catch (e) { return json({ error: (e as Error).message }, 500); }
   }
