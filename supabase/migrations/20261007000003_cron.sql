@@ -1,5 +1,5 @@
 -- Scheduled jobs. The cron secret lives in Vault; the notify function checks it with check_cron_secret().
--- Replace __PROJECT_REF__ with the Supabase project ref before applying (the setup script does this).
+-- Replace iluzuwperoskplbzxyke with the Supabase project ref before applying (the setup script does this).
 create extension if not exists pg_cron;
 create extension if not exists pg_net;
 
@@ -9,7 +9,7 @@ where not exists (select 1 from vault.secrets where name = 'pitik_cron_secret');
 -- Every 15 minutes: send the one consolidated message per ride (email + Strava line)
 select cron.schedule('pitik-notify', '*/15 * * * *', $job$
   select net.http_post(
-    url := 'https://__PROJECT_REF__.supabase.co/functions/v1/notify',
+    url := 'https://iluzuwperoskplbzxyke.supabase.co/functions/v1/notify',
     headers := jsonb_build_object('Content-Type', 'application/json',
       'x-cron-secret', (select decrypted_secret from vault.decrypted_secrets where name = 'pitik_cron_secret')),
     body := '{}'::jsonb,

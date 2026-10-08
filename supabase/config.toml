@@ -1,4 +1,4 @@
-project_id = "pitik"
+project_id = "iluzuwperoskplbzxyke"
 
 [functions.strava]
 verify_jwt = false

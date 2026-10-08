@@ -44,7 +44,7 @@ export async function stravaPut(acc: StravaAccount, path: string, body: unknown)
   return r.json();
 }
 
-const OUTDOOR = /ride|cycl|bike|gravel|mountain|handcycle|velomobile/i;
+export const OUTDOOR = /ride|cycl|bike|gravel|mountain|handcycle|velomobile/i;
 
 /** Pull one activity's route and record the moments it passed a pitikero. Keeps only a thinned track, briefly. */
 export async function processActivity(acc: StravaAccount, activityId: number, summary?: Record<string, any>) {
