@@ -28,8 +28,10 @@ export default function Rider() {
   const [credit, setCredit] = useState(0);
   const [msg, setMsg] = useState<{ t: string; k?: 'ok' | 'err' } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [stravaReady, setStravaReady] = useState<boolean | null>(null);
 
   useEffect(() => {
+    callFn<{ configured: boolean }>('strava', 'status').then((r) => setStravaReady(!!r.configured)).catch(() => setStravaReady(false));
     supabase.rpc('my_strava').then(({ data }) => setStrava((data as typeof strava) ?? null));
     supabase.from('credits').select('amount').is('used_order_id', null).then(({ data }) =>
       setCredit((data ?? []).reduce((a: number, r: { amount: number }) => a + Number(r.amount), 0)));
@@ -97,6 +99,11 @@ export default function Rider() {
             <p className="note">New rides come in on their own. {strava.write_ok ? 'When a pitikero caught you, we add one line to that ride.' : 'You chose not to let Pitik add a line to your rides; you will still get an email.'}</p>
             <button className="btn alt small" disabled={busy} onClick={sync}>{busy ? 'Checking…' : 'Check my last 7 days now'}</button>
           </>
+        ) : stravaReady === false ? (
+          <>
+            <div className="between"><h3>Strava</h3><span className="badge">Coming soon</span></div>
+            <p className="note" style={{ color: 'var(--ink2)', fontSize: 14 }}>Soon you can connect Strava once and every ride comes in on its own. For now, upload your ride file or tell us when you passed, below.</p>
+          </>
         ) : (
           <>
             <h3>Connect Strava once</h3>
@@ -122,7 +129,7 @@ export default function Rider() {
         </>
       )}
 
-      <NoStrava onAdded={load} />
+      <NoStrava onAdded={load} open={stravaReady === false && !strava} />
       <p className="note"><Link to="/photos">Your purchased photos →</Link></p>
     </Layout>
   );
@@ -141,7 +148,7 @@ function RideCard({ r }: { r: RideRow }) {
   );
 }
 
-function NoStrava({ onAdded }: { onAdded: () => void }) {
+function NoStrava({ onAdded, open }: { onAdded: () => void; open?: boolean }) {
   const nav = useNavigate();
   const [d, setD] = useState(dateInput());
   const [shoots, setShoots] = useState<{ id: string; place_label: string | null; first_shot_at: string; last_shot_at: string; photo_count: number; pitikero: { name: string } }[]>([]);
@@ -177,7 +184,7 @@ function NoStrava({ onAdded }: { onAdded: () => void }) {
   }
 
   return (
-    <details className="card flat">
+    <details className="card flat" open={open}>
       <summary style={{ cursor: 'pointer', minHeight: 44, display: 'flex', alignItems: 'center', fontWeight: 600 }}>No Strava? Find your photos another way</summary>
       <div className="stack" style={{ paddingTop: 10 }}>
         <div className="pick"><div className="btn alt small" aria-hidden="true">{busy ? 'Reading…' : 'Upload a ride file (GPX from Garmin, Wahoo, Coros)'}</div>
