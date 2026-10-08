@@ -26,6 +26,12 @@ export default function Login() {
     setBusy(false);
     if (error) setErr(errText(error)); else setSent(true);
   }
+  async function guest() {
+    setErr(''); setBusy(true);
+    const { error } = await supabase.auth.signInAnonymously();
+    setBusy(false);
+    if (error) setErr(/disabled|not enabled|anonymous/i.test(error.message) ? 'Guest sign-in is off right now. Use your email instead.' : errText(error));
+  }
   async function verify(e: React.FormEvent) {
     e.preventDefault(); setErr(''); setBusy(true);
     const { error } = await supabase.auth.verifyOtp({ email: email.trim(), token: code.trim(), type: 'email' });
@@ -44,6 +50,9 @@ export default function Login() {
           </div>
           <button className="btn sun" disabled={busy || !email}>{busy ? 'Sending…' : 'Email me a code'}</button>
           <Msg text={err} kind="err" />
+          <div className="or" style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: 'var(--muted)' }}><span style={{ flex: 1, height: 1, background: 'var(--line)' }} />o kaya<span style={{ flex: 1, height: 1, background: 'var(--line)' }} /></div>
+          <button type="button" className="btn alt" disabled={busy} onClick={guest}>Subukan muna (walang email)</button>
+          <p className="note">For trying Pitik out. Your test account stays on this phone only.</p>
         </form>
       ) : (
         <form className="card" onSubmit={verify}>

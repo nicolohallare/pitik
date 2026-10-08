@@ -27,7 +27,7 @@ export default function Account() {
     <Layout>
       <h1>Account</h1>
       <section className="card">
-        <p style={{ margin: 0 }}>Signed in as <b>{profile?.email}</b></p>
+        <p style={{ margin: 0 }}>Signed in as <b>{profile?.email || 'Guest (test account on this phone)'}</b></p>
         <label className="row" style={{ alignItems: 'center', gap: 10, minHeight: 44 }}>
           <input type="checkbox" checked={notify} onChange={(e) => toggle(e.target.checked)} style={{ width: 22, height: 22 }} />
           Email me once per ride when a pitikero caught me
