@@ -26,8 +26,9 @@ create schema vault;
 create table vault.secrets (name text primary key, secret text);
 create view vault.decrypted_secrets as select name, secret as decrypted_secret from vault.secrets;
 insert into vault.secrets values ('pitik_cron_secret', 'a-long-enough-cron-secret-value');
+create schema cron; create function cron.schedule(a text, b text, c text) returns bigint language sql as $$ select 1::bigint $$;
 `);
-for (const f of ['20261007000001_pitik_core.sql', '20261007000002_storage.sql']) {
+for (const f of ['20261007000001_pitik_core.sql', '20261007000002_storage.sql', '20261009000001_phone_login.sql', '20261009000002_trial_allowance.sql']) {
   try { await db.exec(readFileSync('../supabase/migrations/' + f, 'utf8').replace('create extension if not exists pgcrypto;', '')); console.log('applied', f); }
   catch (e) { console.error('FAILED', f, e.message); process.exit(1); }
 }
@@ -255,6 +256,54 @@ console.log('feedback');
 await as(null, () => q(`insert into feedback (name, role, liked) values ('Jun','pitikero','ok')`));
 ok((await as(null, () => q(`select * from feedback`)).catch(() => 'denied')) === 'denied', 'public cannot read feedback');
 ok((await as(A, () => q(`select * from feedback`))).length === 1, 'admin reads feedback');
+
+console.log('phone accounts');
+const PH = uuid();
+await q(`insert into auth.users values ($1,'09171112222@m.pitik.invalid')`, [PH]);
+const phRow = (await q(`select email, phone, is_admin from profiles where id = $1`, [PH]))[0];
+ok(phRow.phone === '09171112222' && phRow.email === null && !phRow.is_admin, 'phone sign-up stores the number, not the stand-in email');
+ok((await q(`select count(*)::int n from credits where user_id = $1`, [PH]))[0].n === 1, 'phone rider gets the founding credit');
+await as(A, () => q(`select admin_give_credit('+63 917 111 2222', 50, 'test')`));
+ok((await q(`select sum(amount)::int n from credits where user_id = $1`, [PH]))[0].n === 150, 'admin can give credit by mobile number');
+
+console.log('trial allowance');
+const tday = new Date(Date.now() + 8 * 3600e3).toISOString().slice(0, 10);   // today in Manila
+await expectErr(as(P, () => q(`select admin_set_trial_days('2026-10-11')`)), 'pitikero cannot set trial days');
+await as(A, () => q(`select admin_set_trial_days($1)`, [tday + ', junk']));
+ok((await q(`select cfg('trial_days') v`))[0].v === tday, 'trial days saved and cleaned');
+const PK2 = uuid();
+await q(`insert into auth.users values ($1,'k@example.com')`, [PK2]);
+await as(PK2, () => q(`insert into pitikeros (id,name,handle,price,gcash_number) values ($1,'Kalye','kalye',50,'09170000000')`, [PK2]));
+const mkShoot = async (lat, at, clock) => (await as(PK2, () => q(`insert into shoots (pitikero_id,lat,lon,checked_in_at,pin_source) values ($1,$2,121.1675,$3,'phone') returning id`, [PK2, lat, at])))[0].id;
+const s1 = await mkShoot(14.5947, tday + 'T05:40:00+08:00');
+let shotN = 0;
+const addShots = async (sid, n, hh) => { for (let i = 0; i < n; i++) await as(PK2, () => q(`insert into photos (id,shoot_id,pitikero_id,camera_time,original_path,preview_path,thumb_path,source_key) values ($1,$2,$3,$4,'x','y','z',$5)`, [uuid(), sid, PK2, `${tday}T${hh}:${String(i % 60).padStart(2, '0')}:00+08:00`, 'k' + sid + (shotN++)])); };
+await addShots(s1, 39, '06');
+let st = (await as(PK2, () => q(`select my_allowance() r`)))[0].r[0];
+ok(st.checked_in && st.at_taktak && !st.clock_checked && st.photos === 39 && !st.qualifies, 'progress shows: checked in, no clock check, 39 of 40');
+await as(PK2, () => q(`update shoots set clock_checked = true where id = $1`, [s1]));
+await addShots(s1, 1, '07');
+st = (await as(PK2, () => q(`select my_allowance() r`)))[0].r[0];
+ok(st.photos === 40 && !st.active && !st.qualifies, 'not earned while the account is still pending');
+await as(A, () => q(`select admin_set_pitikero($1,'active',false)`, [PK2]));
+await addShots(s1, 5, '14');   // afternoon shots do not count
+st = (await as(PK2, () => q(`select my_allowance() r`)))[0].r[0];
+ok(st.photos === 40 && st.qualifies, 'qualifies once active (afternoon shots not counted)');
+await expectErr(as(PK2, () => q(`select award_allowances()`)), 'pitikero cannot trigger awards');
+await q(`select award_allowances()`); await q(`select award_allowances()`);
+const al = await q(`select amount::int a, trial_day::text d from ledger where pitikero_id = $1 and kind = 'allowance'`, [PK2]);
+ok(al.length === 1 && al[0].a === 300 && al[0].d === tday, 'allowance paid once, ₱300, for that Sunday');
+const PK3 = uuid();
+await q(`insert into auth.users values ($1,'far@example.com')`, [PK3]);
+await as(PK3, () => q(`insert into pitikeros (id,name,handle,price) values ($1,'Far','far',50)`, [PK3]));
+await as(A, () => q(`select admin_set_pitikero($1,'active',false)`, [PK3]));
+const sf = (await as(PK3, () => q(`insert into shoots (pitikero_id,lat,lon,checked_in_at,pin_source) values ($1,14.70,121.1675,$2,'phone') returning id`, [PK3, tday + 'T06:00:00+08:00'])))[0].id;
+await as(PK3, () => q(`update shoots set clock_checked = true where id = $1`, [sf]));
+for (let i = 0; i < 45; i++) await as(PK3, () => q(`insert into photos (id,shoot_id,pitikero_id,camera_time,original_path,preview_path,thumb_path,source_key) values ($1,$2,$3,$4,'x','y','z',$5)`, [uuid(), sf, PK3, `${tday}T06:${String(i).padStart(2, '0')}:00+08:00`, 'f' + i]));
+await q(`select award_allowances()`);
+ok((await q(`select count(*)::int n from ledger where pitikero_id = $1 and kind = 'allowance'`, [PK3]))[0].n === 0, 'not earned when checked in 11 km from Taktak');
+const adm = (await as(A, () => q(`select admin_allowances(null) r`)))[0].r;
+ok(adm.day === tday && adm.rows.some(r => r.name === 'Kalye' && r.awarded), 'admin sees who earned it');
 
 console.log(fails ? `\n${fails} FAILED, ${passes} passed` : `\nall ${passes} passed`);
 process.exit(fails ? 1 : 0);

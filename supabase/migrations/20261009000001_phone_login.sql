@@ -30,7 +30,7 @@ declare uid uuid; k text := lower(trim(p_email));
 begin
   if not is_admin() then raise exception 'Admins only'; end if;
   if p_amount <= 0 or p_amount > 5000 then raise exception 'Check the amount'; end if;
-  k := case when k ~ '^(\+?63|0)?9\d{9}$' then '0' || right(k, 10) else k end;
+  k := case when regexp_replace(k, '[\s()+-]', '', 'g') ~ '^(63|0)?9\d{9}$' then '0' || right(regexp_replace(k, '\D', '', 'g'), 10) else k end;
   select id into uid from profiles where lower(email) = k or phone = k;
   if uid is null then raise exception 'No rider with that email or number yet'; end if;
   insert into credits (user_id, amount, reason) values (uid, p_amount, p_reason);

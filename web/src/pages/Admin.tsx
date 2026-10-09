@@ -3,6 +3,7 @@ import { Layout, Msg, Seg } from '../components/ui';
 import { useAuth } from '../lib/auth';
 import { callFn, errText, supabase } from '../lib/supabase';
 import { day, peso, time } from '../lib/format';
+import type { AllowanceDay } from '../components/Allowance';
 
 type Bal = { id: string; name: string; handle: string; gcash_number: string | null; gcash_name: string | null; founding: boolean; status: string; photos: number;
   unpaid: number; unpaid_sales: number; unpaid_tips: number; unpaid_extras: number; last_paid_at: string | null };
@@ -165,9 +166,56 @@ function Extras() {
         <div className="field"><label htmlFor="cr">Reason</label><input id="cr" value={creason} onChange={(e) => setCreason(e.target.value)} /></div>
         <button className="btn" disabled={!email || !Number(camt)} onClick={addCredit}>Give credit</button>
       </section>
+      <TrialDays />
       <ResetPin />
       {msg && <Msg text={msg.t} kind={msg.k} />}
     </>
+  );
+}
+
+function TrialDays() {
+  const [data, setData] = useState<{ days: string; day: string | null; rows: (AllowanceDay & { name: string })[] } | null>(null);
+  const [days, setDays] = useState('');
+  const [msg, setMsg] = useState<{ t: string; k?: 'ok' | 'err' } | null>(null);
+  const load = useCallback(async (d?: string) => {
+    const { data: r, error } = await supabase.rpc('admin_allowances', { p_day: d ?? null });
+    if (error) return setMsg({ t: errText(error), k: 'err' });
+    setData(r as typeof data); setDays((r as { days: string }).days.replaceAll(',', ', '));
+  }, []);
+  useEffect(() => { load(); }, [load]);
+  async function save() {
+    const { error } = await supabase.rpc('admin_set_trial_days', { p_days: days });
+    setMsg(error ? { t: errText(error), k: 'err' } : { t: 'Saved. Pitikeros see the checklist on their Ngayon tab.', k: 'ok' });
+    load();
+  }
+  async function award() {
+    const { data: n, error } = await supabase.rpc('award_allowances');
+    setMsg(error ? { t: errText(error), k: 'err' } : { t: n ? `${n} allowance(s) added to payouts.` : 'Nobody new qualified yet.', k: 'ok' });
+    load(data?.day ?? undefined);
+  }
+  const list = (data?.days ?? '').split(',').filter(Boolean);
+  return (
+    <section className="card">
+      <h2>Trial Sundays</h2>
+      <p className="note">Pitikeros earn the allowance automatically when they check in at Taktak with GPS (4–11am), do the clock check, and upload enough morning shots by noon the next day. It is checked every hour and lands in their payout. Reverse one with a negative adjustment if something looks off.</p>
+      <div className="field"><label htmlFor="td">Trial days (YYYY-MM-DD, comma between)</label><input id="td" value={days} onChange={(e) => setDays(e.target.value)} placeholder="2026-10-11, 2026-10-18" /></div>
+      <button className="btn small" onClick={save}>Save trial days</button>
+      {list.length > 0 && (
+        <>
+          <div className="row">{list.map((d) => <button key={d} className="btn alt small" style={{ flex: '0 0 auto' }} aria-pressed={d === data?.day} onClick={() => load(d)}>{d}</button>)}</div>
+          <div className="stack">
+            {(data?.rows ?? []).map((r) => (
+              <div key={r.name} className="between" style={{ borderTop: '1px solid var(--line)', paddingTop: 8 }}>
+                <span><b>{r.name}</b> <span className="note">{r.photos}/{r.min_photos} shots{r.checked_in ? (r.at_taktak ? ' · at Taktak' : ' · NOT at Taktak') : ' · no check-in'}{r.clock_checked ? ' · clock ✓' : ''}{r.active ? '' : ' · not active'}</span></span>
+                <span className={'badge' + (r.awarded ? ' live' : '')}>{r.awarded ? 'Paid' : r.qualifies ? 'Earned' : 'Not yet'}</span>
+              </div>
+            ))}
+          </div>
+          <button className="btn alt small" onClick={award}>Check now and add earned allowances</button>
+        </>
+      )}
+      {msg && <Msg text={msg.t} kind={msg.k} />}
+    </section>
   );
 }
 

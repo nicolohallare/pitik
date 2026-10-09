@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Layout, Msg, Seg } from '../components/ui';
 import { ClockCheck, type Shoot } from '../components/ClockCheck';
 import { Upload } from '../components/Upload';
+import { AllowanceCard } from '../components/Allowance';
 import { useAuth, type Pitikero as PK } from '../lib/auth';
 import { errText, publicUrl, supabase } from '../lib/supabase';
 import { day, isTodayManila, peso, plural, time } from '../lib/format';
@@ -21,7 +22,7 @@ export default function Pitikero() {
       {pitikero.status === 'paused' && <p className="msg err">Your account is paused. Riders can't see your shots right now. Message the Pitik team.</p>}
       <Seg label="Section" value={tab} onChange={setTab} options={[
         { v: 'today', label: 'Ngayon' }, { v: 'kita', label: 'Kita' }, { v: 'bayad', label: 'Bayad' }, { v: 'profile', label: 'Profile' }]} />
-      {tab === 'today' && <Today pk={pitikero} />}
+      {tab === 'today' && <><AllowanceCard /><Today pk={pitikero} /></>}
       {tab === 'kita' && <Kita />}
       {tab === 'bayad' && <Bayad />}
       {tab === 'profile' && <ProfileForm pk={pitikero} />}
