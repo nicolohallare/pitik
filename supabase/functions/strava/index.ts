@@ -85,6 +85,13 @@ Deno.serve(async (req) => {
     const { data: c } = await admin().from('app_config').select('value').eq('key', 'strava_public').maybeSingle();
     if (c?.value === 'true') return true;
     if (!uid) return false;
+    // First come, first served up to Strava's athlete capacity for this app (app_config strava_max)
+    const { data: mx } = await admin().from('app_config').select('value').eq('key', 'strava_max').maybeSingle();
+    const max = Number(mx?.value ?? 0);
+    if (max > 0) {
+      const { count } = await admin().from('strava_accounts').select('user_id', { count: 'exact', head: true });
+      if ((count ?? 0) < max) return true;
+    }
     const { data: p } = await admin().from('profiles').select('is_admin, email, phone').eq('id', uid).maybeSingle();
     if (p?.is_admin) return true;
     // A few named riders can be let in early: app_config strava_allow = '0917…, someone@…'
@@ -97,7 +104,7 @@ Deno.serve(async (req) => {
   if (action === 'auth_url') {
     const user = await currentUser(req);
     if (!user) return json({ error: 'Please sign in again' }, 401);
-    if (!(await open(user.id))) return json({ error: 'Strava is coming soon. For now, upload your ride file or tell us when you passed.' }, 503);
+    if (!(await open(user.id))) return json({ error: 'Strava slots are full for now. Upload your ride file or tell us when you passed instead.' }, 503);
     const p = new URLSearchParams({
       client_id: env('STRAVA_CLIENT_ID'), response_type: 'code', approval_prompt: 'auto',
       scope: 'read,activity:read_all,activity:write',
