@@ -2,9 +2,8 @@
 -- A pitikero earns it for a trial day when ALL of these are true:
 --   1. Their account is active (the Pitik team activated them)
 --   2. They tapped "Nandito ako" with their phone's GPS that morning (4–11am), within allowance_radius_km of Taktak
---   3. They did the clock check on that shoot
---   4. At least allowance_min_photos real camera shots from that morning (4am–12nn) are uploaded
---   5. Uploaded by the deadline: noon the next day
+--   3. At least allowance_min_photos real camera shots from that morning (4am–12nn) are uploaded
+--   4. Uploaded by the deadline: noon the next day
 -- Checked hourly; the allowance lands in their next payout automatically. Admins can still reverse it with an adjustment.
 
 insert into public.app_config(key, value) values
@@ -52,7 +51,7 @@ begin
     'day', p_day, 'amount', cfg_num('allowance_amount', 300), 'deadline', deadline,
     'active', st = 'active', 'checked_in', checked, 'at_taktak', near, 'clock_checked', clock,
     'photos', n, 'min_photos', need,
-    'qualifies', st = 'active' and near and clock and n >= need,
+    'qualifies', st = 'active' and near and n >= need,
     'awarded', awarded is not null, 'awarded_amount', awarded);
 end $$;
 

@@ -14,7 +14,6 @@ export function Checklist({ a }: { a: AllowanceDay }) {
   const items: [boolean, string][] = [
     [a.active, 'Account activated by the Pitik team'],
     [a.checked_in && a.at_taktak, '"Nandito ako" with your phone\'s GPS at Taktak, 4–11am'],
-    [a.clock_checked, 'Clock check done'],
     [a.photos >= a.min_photos, `${Math.min(a.photos, a.min_photos)} of ${a.min_photos} shots from that morning uploaded`],
   ];
   return (

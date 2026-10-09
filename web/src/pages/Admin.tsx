@@ -197,7 +197,7 @@ function TrialDays() {
   return (
     <section className="card">
       <h2>Trial Sundays</h2>
-      <p className="note">Pitikeros earn the allowance automatically when they check in at Taktak with GPS (4–11am), do the clock check, and upload enough morning shots by noon the next day. It is checked every hour and lands in their payout. Reverse one with a negative adjustment if something looks off.</p>
+      <p className="note">Pitikeros earn the allowance automatically when they check in at Taktak with GPS (4–11am) and upload enough morning shots by noon the next day. It is checked every hour and lands in their payout. Reverse one with a negative adjustment if something looks off.</p>
       <div className="field"><label htmlFor="td">Trial days (YYYY-MM-DD, comma between)</label><input id="td" value={days} onChange={(e) => setDays(e.target.value)} placeholder="2026-10-11, 2026-10-18" /></div>
       <button className="btn small" onClick={save}>Save trial days</button>
       {list.length > 0 && (
@@ -206,7 +206,7 @@ function TrialDays() {
           <div className="stack">
             {(data?.rows ?? []).map((r) => (
               <div key={r.name} className="between" style={{ borderTop: '1px solid var(--line)', paddingTop: 8 }}>
-                <span><b>{r.name}</b> <span className="note">{r.photos}/{r.min_photos} shots{r.checked_in ? (r.at_taktak ? ' · at Taktak' : ' · NOT at Taktak') : ' · no check-in'}{r.clock_checked ? ' · clock ✓' : ''}{r.active ? '' : ' · not active'}</span></span>
+                <span><b>{r.name}</b> <span className="note">{r.photos}/{r.min_photos} shots{r.checked_in ? (r.at_taktak ? ' · at Taktak' : ' · NOT at Taktak') : ' · no check-in'}{r.active ? '' : ' · not active'}</span></span>
                 <span className={'badge' + (r.awarded ? ' live' : '')}>{r.awarded ? 'Paid' : r.qualifies ? 'Earned' : 'Not yet'}</span>
               </div>
             ))}

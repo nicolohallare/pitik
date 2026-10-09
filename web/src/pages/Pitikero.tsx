@@ -108,8 +108,8 @@ function Today({ pk }: { pk: PK }) {
             <a className="link" href={`https://maps.google.com/?q=${shoot.lat},${shoot.lon}`} target="_blank" rel="noreferrer">Map</a>
           </div>
           <p className="note">Pinned {shoot.pin_source === 'phone' ? 'from your phone' : shoot.pin_source === 'map' ? 'from a map pin' : "from your photos' GPS"}{shoot.accuracy_m ? `, within ${Math.round(shoot.accuracy_m)} m` : ''}.</p>
-          <ClockCheck shoot={shoot} onChange={load} />
           <Upload shoot={shoot} uid={pk.id} label={pk.name} onUploaded={load} />
+          <ClockCheck shoot={shoot} onChange={load} />
           <Recent shootId={shoot.id} count={shoot.photo_count} />
           <Done shoot={shoot} onDone={load} />
           <button className="link" onClick={() => setSel('')}>Bagong check-in (ibang spot o ibang araw)</button>

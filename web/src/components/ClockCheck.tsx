@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
-import { checkShot } from '../lib/photos';
 import { errText, supabase } from '../lib/supabase';
-import { fmtOffset, hms } from '../lib/format';
+import { fmtOffset } from '../lib/format';
 import { Msg } from './ui';
 
 export type Shoot = {
@@ -10,75 +9,74 @@ export type Shoot = {
   photo_count: number; done_at: string | null;
 };
 
-function LiveClock() {
-  const [now, setNow] = useState(Date.now());
-  useEffect(() => { const t = setInterval(() => setNow(Date.now()), 200); return () => clearInterval(t); }, []);
-  return <div className="bigclock" aria-label="Current time">{hms(now)}</div>;
+const hhmm = (ms: number) => new Date(ms).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Manila' });
+
+/** Signs that the camera's clock is off: shots long before check-in, many hours after, or in the future. */
+export function clockLooksOff(s: Shoot) {
+  if (!s.first_shot_at || !s.last_shot_at) return false;
+  const ci = Date.parse(s.checked_in_at), first = Date.parse(s.first_shot_at), last = Date.parse(s.last_shot_at);
+  return first < ci - 30 * 60e3 || first > ci + 6 * 3600e3 || last > Date.now() + 5 * 60e3;
 }
 
-/** Clock check: photograph this phone's clock with the camera; the difference fixes every shot's time. */
+/**
+ * Camera clock fix. Most cameras are right and nobody needs this; it only opens when the shots' times
+ * don't fit the check-in, or when the pitikero taps it. They type the time their camera shows; the
+ * difference from this phone's clock is added to every shot's time.
+ */
 export function ClockCheck({ shoot, onChange }: { shoot: Shoot; onChange: () => void }) {
-  const [step, setStep] = useState<'idle' | 'show' | 'ask'>('idle');
-  const [camTime, setCamTime] = useState<number | null>(null);
-  const [img, setImg] = useState('');
-  const [shown, setShown] = useState('');
+  const suspicious = clockLooksOff(shoot);
+  const [open, setOpen] = useState(false);
+  const [cam, setCam] = useState(hhmm(Date.now()));
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
+  const [, tick] = useState(0);
+  useEffect(() => { if (!open) return; setCam(hhmm(Date.now())); const t = setInterval(() => tick((n) => n + 1), 5000); return () => clearInterval(t); }, [open]);
 
-  async function load(f?: File) {
-    if (!f) return;
-    setErr('');
-    const c = await checkShot(f);
-    if (!c.ok) { setErr('Walang oras ng camera ang litratong iyan. Kunan ulit gamit ang camera at i-load ang original file.'); return; }
-    setCamTime(c.cameraTime); setImg(URL.createObjectURL(f)); setShown(hms(c.cameraTime)); setStep('ask');
-  }
-  async function save() {
-    if (camTime == null) return;
-    const [h, m, s] = shown.split(':').map(Number);
-    if (![h, m].every(Number.isFinite)) return;
-    // The clock in the photo shows Manila time on the same day as the camera's time
-    const ymd = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(camTime));
-    const truth = Date.parse(`${ymd}T${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s || 0).padStart(2, '0')}+08:00`);
-    let off = truth - Math.floor(camTime / 1000) * 1000;
-    if (off > 12 * 3600e3) off -= 86400e3; if (off < -12 * 3600e3) off += 86400e3;
-    setBusy(true);
+  async function save(offMs?: number) {
+    let off = offMs;
+    if (off == null) {
+      const [h, m] = cam.split(':').map(Number);
+      if (![h, m].every(Number.isFinite)) return setErr('Type the time your camera shows.');
+      const now = Date.now();
+      const ymd = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(now));
+      const camNow = Date.parse(`${ymd}T${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00+08:00`);
+      off = Math.round((now - camNow) / 60e3) * 60e3;          // to the minute
+      if (off > 12 * 3600e3) off -= 86400e3; if (off < -12 * 3600e3) off += 86400e3;
+    }
+    setBusy(true); setErr('');
     const { error } = await supabase.from('shoots').update({ clock_offset_ms: off, clock_checked: true }).eq('id', shoot.id);
     setBusy(false);
-    if (error) { setErr(errText(error)); return; }
+    if (error) return setErr(errText(error));
     try { localStorage.setItem('pitik.clock', JSON.stringify({ off, at: Date.now() })); } catch { /* ok */ }
-    setStep('idle'); onChange();
+    setOpen(false); onChange();
   }
 
-  if (step === 'show') return (
-    <div className="card flat">
-      <span className="badge">Clock check · 1 of 2</span>
-      <LiveClock />
-      <p className="note" style={{ color: 'var(--ink2)', fontSize: 14 }}>Kunan ng litrato ang orasang ito gamit ang camera na gagamitin mo sa pag-shoot. Tapos i-load dito ang litrato.</p>
-      <div className="pick"><div className="btn green small" aria-hidden="true">Load the clock photo</div>
-        <input type="file" accept="image/*" aria-label="Load the photo of the clock" onChange={(e) => { load(e.target.files?.[0]); e.target.value = ''; }} /></div>
-      <button className="btn alt small" onClick={() => setStep('idle')}>Mamaya na</button>
-      <Msg text={err} kind="err" />
-    </div>
-  );
-  if (step === 'ask') return (
-    <div className="card flat">
-      <span className="badge">Clock check · 2 of 2</span>
-      <img src={img} alt="Your photo of the clock" style={{ borderRadius: 12, maxHeight: 220, objectFit: 'cover' }} />
-      <div className="field"><label htmlFor="ckt">Anong oras ang nakikita sa litrato?</label>
-        <input id="ckt" type="time" step={1} value={shown} onChange={(e) => setShown(e.target.value)} /></div>
-      <p className="note">Sabi ng camera: {camTime ? hms(camTime) : ''}. Palitan kung iba ang nasa litrato.</p>
-      <button className="btn green small" disabled={busy} onClick={save}>{busy ? 'Saving…' : 'Ayos'}</button>
-      <Msg text={err} kind="err" />
-    </div>
-  );
   const off = shoot.clock_offset_ms;
+  if (!open) {
+    if (suspicious && !shoot.clock_checked) return (
+      <div className="msg" role="status">
+        <b>Mukhang mali ang oras ng camera mo.</b> Your shots' times don't match when you checked in, so riders might not find them.
+        <button className="btn small" style={{ marginTop: 8 }} onClick={() => setOpen(true)}>Ayusin ang oras (10 segundo)</button>
+      </div>
+    );
+    if (shoot.clock_checked && Math.abs(off) >= 60e3) return (
+      <p className="note">Camera clock fixed: {fmtOffset(off)} {off > 0 ? 'behind' : 'ahead'}. All shot times adjusted. <button className="link" style={{ display: 'inline', minHeight: 0, padding: 0 }} onClick={() => setOpen(true)}>Change</button></p>
+    );
+    return <button className="link" style={{ alignSelf: 'flex-start' }} onClick={() => setOpen(true)}>Mali ang oras ng camera ko</button>;
+  }
   return (
-    <div className="stack">
-      {shoot.clock_checked
-        ? <p className="msg ok">{Math.abs(off) < 30000 ? '✓ Tama ang oras ng camera mo.' : `✓ Ang camera mo ay ${fmtOffset(off)} ${off > 0 ? 'late' : 'advanced'}. Inayos na namin ang oras ng lahat ng shots mo.`}</p>
-        : off ? <p className="msg">Using your last clock check ({fmtOffset(off)} {off > 0 ? 'late' : 'advanced'}). Ulitin kung inayos mo ang camera.</p>
-        : <p className="note">Clock check: so riders find the right minute even if your camera clock is off.</p>}
-      <button className="btn alt small" onClick={() => setStep('show')}>{shoot.clock_checked ? 'Ulitin ang clock check' : 'Clock check · 10 segundo'}</button>
+    <div className="card flat">
+      <h3>Camera clock</h3>
+      <p className="note" style={{ color: 'var(--ink2)', fontSize: 15 }}>Tingnan ang oras sa camera mo ngayon, tapos i-type dito.</p>
+      <div className="row">
+        <div className="field"><label htmlFor="ckt">Oras sa camera</label>
+          <input id="ckt" type="time" value={cam} onChange={(e) => setCam(e.target.value)} /></div>
+        <div className="field"><label>Oras ngayon (phone)</label><input value={hhmm(Date.now())} readOnly tabIndex={-1} /></div>
+      </div>
+      <button className="btn green small" disabled={busy} onClick={() => save()}>{busy ? 'Saving…' : 'Save'}</button>
+      <button className="btn alt small" disabled={busy} onClick={() => save(0)}>Tama naman ang oras ng camera ko</button>
+      <button className="link" onClick={() => setOpen(false)}>Cancel</button>
+      <Msg text={err} kind="err" />
     </div>
   );
 }
