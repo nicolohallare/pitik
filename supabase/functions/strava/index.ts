@@ -78,12 +78,26 @@ Deno.serve(async (req) => {
     for (const [k, v] of new URLSearchParams(action.slice(8))) url.searchParams.set(k, v);
     action = 'webhook';
   }
-  const configured = !!(env('STRAVA_CLIENT_ID') && env('STRAVA_CLIENT_SECRET'));
+  const keys = !!(env('STRAVA_CLIENT_ID') && env('STRAVA_CLIENT_SECRET'));
+  // While Strava limits the app to a few athletes, only admins see Connect Strava (app_config strava_public = 'true' opens it to all)
+  const open = async (uid?: string) => {
+    if (!keys) return false;
+    const { data: c } = await admin().from('app_config').select('value').eq('key', 'strava_public').maybeSingle();
+    if (c?.value === 'true') return true;
+    if (!uid) return false;
+    const { data: p } = await admin().from('profiles').select('is_admin, email, phone').eq('id', uid).maybeSingle();
+    if (p?.is_admin) return true;
+    // A few named riders can be let in early: app_config strava_allow = '0917…, someone@…'
+    const { data: al } = await admin().from('app_config').select('value').eq('key', 'strava_allow').maybeSingle();
+    const allow = String(al?.value ?? '').toLowerCase().split(',').map((x) => x.replace(/[\s-]/g, '')).filter(Boolean);
+    return [p?.email, p?.phone].some((v) => v && allow.includes(String(v).toLowerCase()));
+  };
+  const configured = keys;
 
   if (action === 'auth_url') {
-    if (!configured) return json({ error: 'Strava is not set up yet. Try again soon.' }, 503);
     const user = await currentUser(req);
     if (!user) return json({ error: 'Please sign in again' }, 401);
+    if (!(await open(user.id))) return json({ error: 'Strava is coming soon. For now, upload your ride file or tell us when you passed.' }, 503);
     const p = new URLSearchParams({
       client_id: env('STRAVA_CLIENT_ID'), response_type: 'code', approval_prompt: 'auto',
       scope: 'read,activity:read_all,activity:write',
@@ -181,7 +195,7 @@ Deno.serve(async (req) => {
     const user = await currentUser(req);
     if (!user) return json({ error: 'Please sign in again' }, 401);
     const acc = await accountFor({ user_id: user.id });
-    if (action === 'status') return json({ connected: !!acc, configured });
+    if (action === 'status') return json({ connected: !!acc, configured: !!acc || await open(user.id) });
     if (!acc) return json({ error: 'Strava is not connected' }, 400);
     if (action === 'sync') {
       try { return json({ ok: true, results: await importRecent(acc, 7) }); }
