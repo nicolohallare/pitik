@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Layout, Msg } from '../components/ui';
 import { useAuth } from '../lib/auth';
 import { callFn, errText, supabase } from '../lib/supabase';
+import { prettyPhone } from '../lib/phone';
 
 export default function Account() {
   const { profile, refresh, signOut } = useAuth();
@@ -27,11 +28,13 @@ export default function Account() {
     <Layout>
       <h1>Account</h1>
       <section className="card">
-        <p style={{ margin: 0 }}>Signed in as <b>{profile?.email || 'Guest (test account on this phone)'}</b></p>
-        <label className="row" style={{ alignItems: 'center', gap: 10, minHeight: 44 }}>
-          <input type="checkbox" checked={notify} onChange={(e) => toggle(e.target.checked)} style={{ width: 22, height: 22 }} />
-          Email me once per ride when a pitikero caught me
-        </label>
+        <p style={{ margin: 0 }}>Signed in as <b>{profile?.phone ? prettyPhone(profile.phone) : profile?.email || 'Guest (test account on this phone)'}</b></p>
+        {profile?.email ? (
+          <label className="row" style={{ alignItems: 'center', gap: 10, minHeight: 44 }}>
+            <input type="checkbox" checked={notify} onChange={(e) => toggle(e.target.checked)} style={{ width: 22, height: 22 }} />
+            Email me once per ride when a pitikero caught me
+          </label>
+        ) : profile?.phone ? <p className="note">Forgot your PIN? Message the Pitik team and we'll set a new one for you.</p> : null}
         {strava && (
           <div className="stack">
             <p className="note">Strava: {strava.athlete_name || 'connected'}. Pitik keeps only the moments you passed a pitikero.</p>

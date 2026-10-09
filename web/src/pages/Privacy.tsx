@@ -7,7 +7,7 @@ export default function Privacy() {
       <section className="card">
         <h3>What Pitik keeps</h3>
         <ul className="stack" style={{ margin: 0, paddingLeft: 20 }}>
-          <li><b>Riders:</b> your email, and for each ride only the moments you passed a pitikero (time and spot). If you connect Strava, we read your rides to find those moments. A ride's route is kept for up to 3 days so late uploads can still be matched, then deleted.</li>
+          <li><b>Riders:</b> your mobile number (or email if you used one), and for each ride only the moments you passed a pitikero (time and spot). If you connect Strava, we read your rides to find those moments. A ride's route is kept for up to 3 days so late uploads can still be matched, then deleted.</li>
           <li><b>Pitikeros:</b> your name, price, GCash number and name (seen only by you and the Pitik team, for payouts), the spots where you checked in, and your photos.</li>
           <li><b>Payments:</b> handled by TechPay Philippines (BSP-licensed). Pitik never sees your card or wallet details.</li>
         </ul>

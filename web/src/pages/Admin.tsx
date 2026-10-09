@@ -159,14 +159,38 @@ function Extras() {
         <h2>Give a rider credit</h2>
         <p className="note">Every new rider already gets the founding credit automatically. Use this for extras. The rider must have signed in once.</p>
         <div className="row">
-          <div className="field"><label htmlFor="ce">Rider email</label><input id="ce" type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
+          <div className="field"><label htmlFor="ce">Rider email or mobile number</label><input id="ce" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
           <div className="field"><label htmlFor="ca">Amount</label><input id="ca" type="number" value={camt} onChange={(e) => setCamt(e.target.value)} /></div>
         </div>
         <div className="field"><label htmlFor="cr">Reason</label><input id="cr" value={creason} onChange={(e) => setCreason(e.target.value)} /></div>
         <button className="btn" disabled={!email || !Number(camt)} onClick={addCredit}>Give credit</button>
       </section>
+      <ResetPin />
       {msg && <Msg text={msg.t} kind={msg.k} />}
     </>
+  );
+}
+
+function ResetPin() {
+  const [phone, setPhone] = useState('');
+  const [pin, setPin] = useState('');
+  const [msg, setMsg] = useState<{ t: string; k?: 'ok' | 'err' } | null>(null);
+  async function reset() {
+    setMsg(null);
+    try { await callFn('account', 'reset_pin', { phone, pin }); setMsg({ t: `New PIN set. Tell them to sign in with ${pin}.`, k: 'ok' }); setPin(''); }
+    catch (e) { setMsg({ t: errText(e), k: 'err' }); }
+  }
+  return (
+    <section className="card">
+      <h2>Reset a PIN</h2>
+      <p className="note">For someone who forgot their PIN. Check it's really them first (message them on Messenger or the GC), then send them the new PIN.</p>
+      <div className="row">
+        <div className="field"><label htmlFor="rp">Mobile number</label><input id="rp" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} /></div>
+        <div className="field"><label htmlFor="rn">New 6-digit PIN</label><input id="rn" inputMode="numeric" maxLength={6} value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))} /></div>
+      </div>
+      <button className="btn" disabled={!phone || pin.length !== 6} onClick={reset}>Set new PIN</button>
+      {msg && <Msg text={msg.t} kind={msg.k} />}
+    </section>
   );
 }
 

@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 
-export type Profile = { id: string; email: string | null; display_name: string | null; is_admin: boolean; email_notify: boolean };
+export type Profile = { id: string; email: string | null; phone: string | null; display_name: string | null; is_admin: boolean; email_notify: boolean };
 export type Pitikero = { id: string; name: string; handle: string; price: number; gcash_number: string | null; gcash_name: string | null; fb_page: string | null; status: string; founding: boolean };
 
 type Ctx = {
@@ -20,7 +20,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const load = useCallback(async (s: Session | null) => {
     if (!s) { setProfile(null); setPitikero(null); return; }
     const [{ data: p }, { data: pk }] = await Promise.all([
-      supabase.from('profiles').select('id,email,display_name,is_admin,email_notify').eq('id', s.user.id).maybeSingle(),
+      supabase.from('profiles').select('id,email,phone,display_name,is_admin,email_notify').eq('id', s.user.id).maybeSingle(),
       supabase.rpc('my_pitikero'),
     ]);
     setProfile((p as Profile) ?? null);

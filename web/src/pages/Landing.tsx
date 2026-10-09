@@ -21,7 +21,7 @@ export default function Landing() {
         <h2>Connect Strava once.</h2>
         <ol className="stack" style={{ margin: 0, paddingLeft: 20 }}>
           <li>Every ride comes in on its own. Pitik checks if you passed a pitikero while they were shooting.</li>
-          <li>You get one message per ride: a line on your Strava activity and one email, listing every pitikero who caught you.</li>
+          <li>You get one message per ride: a line on your Strava activity (and an email, if you signed in with one), listing every pitikero who caught you.</li>
           <li>You only see the few minutes around when you passed. Pick yours, add a tip, pay with GCash, Maya or card.</li>
         </ol>
         <p className="note">No Strava? Upload a GPX from Garmin or Wahoo, or just tell us roughly when you passed.</p>

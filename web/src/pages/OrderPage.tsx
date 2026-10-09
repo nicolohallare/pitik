@@ -42,13 +42,13 @@ export default function OrderPage() {
           <h1>{sp.get('pay') === 'failed' ? 'Payment not finished' : 'Confirming your payment…'}</h1>
           <p className="lead">{sp.get('pay') === 'failed'
             ? 'Nothing was charged. Your photos are still picked on your ride page.'
-            : tries < 40 ? 'This usually takes a few seconds.' : 'It can take a few minutes. We will email you once it is confirmed.'}</p>
+            : tries < 40 ? 'This usually takes a few seconds.' : 'It can take a few minutes. Your photos will be in Your photos once it is confirmed.'}</p>
           <Link className="btn alt small" to="/rider">Back to your rides</Link>
         </section>
       ) : (
         <section className="card">
           <h1>{o.status === 'review' ? 'We are checking this payment' : 'Payment cancelled'}</h1>
-          <p className="lead">{o.status === 'review' ? 'The amount did not match. The Pitik team will sort it out and email you.' : 'Nothing was charged.'}</p>
+          <p className="lead">{o.status === 'review' ? 'The amount did not match. The Pitik team will sort it out and contact you.' : 'Nothing was charged.'}</p>
           <Link className="btn alt small" to="/rider">Back to your rides</Link>
         </section>
       )}
