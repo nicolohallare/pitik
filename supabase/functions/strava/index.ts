@@ -72,7 +72,12 @@ const later = (p: Promise<unknown>) => {
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
   const url = new URL(req.url);
-  const action = url.searchParams.get('action');
+  // Strava's webhook calls /strava/webhook (a path, because Strava appends its own ?hub.* query)
+  let action = url.pathname.replace(/\/+$/, '').endsWith('/webhook') ? 'webhook' : url.searchParams.get('action');
+  if (action?.startsWith('webhook?')) {          // tolerate an old-style ?action=webhook callback
+    for (const [k, v] of new URLSearchParams(action.slice(8))) url.searchParams.set(k, v);
+    action = 'webhook';
+  }
   const configured = !!(env('STRAVA_CLIENT_ID') && env('STRAVA_CLIENT_SECRET'));
 
   if (action === 'auth_url') {
@@ -200,11 +205,12 @@ Deno.serve(async (req) => {
     const r = await fetch('https://www.strava.com/api/v3/push_subscriptions', {
       method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({ client_id: env('STRAVA_CLIENT_ID'), client_secret: env('STRAVA_CLIENT_SECRET'),
-        callback_url: `${FN_URL}?action=webhook`, verify_token: env('STRAVA_VERIFY_TOKEN') }),
+        callback_url: `${FN_URL}/webhook`, verify_token: env('STRAVA_VERIFY_TOKEN') }),
     });
     const body = await r.json().catch(() => null);
     if (r.ok && body?.id) await admin().from('app_config').upsert({ key: 'strava_subscription_id', value: String(body.id) });
-    return json({ status: r.status, body }, r.ok ? 200 : 400);
+    if (!r.ok) return json({ error: `Strava said ${r.status}: ${JSON.stringify(body?.errors ?? body?.message ?? body)}`, status: r.status, body }, 400);
+    return json({ ok: true, subscription_id: body.id });
   }
 
   return json({ error: 'unknown action' }, 400);
