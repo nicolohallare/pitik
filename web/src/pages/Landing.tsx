@@ -18,7 +18,7 @@ export default function Landing() {
 
       <section className="card">
         <span className="who">ang rider</span>
-        <h2>Connect Strava once.</h2>
+        <h2>Connect your Strava once.</h2>
         <ol className="stack" style={{ margin: 0, paddingLeft: 20 }}>
           <li>Every ride comes in on its own. Pitik checks if you passed a pitikero while they were shooting.</li>
           <li>You get one message per ride: a line on your Strava activity (and an email, if you signed in with one), listing every pitikero who caught you.</li>

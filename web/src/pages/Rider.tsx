@@ -4,6 +4,7 @@ import { Layout, Msg } from '../components/ui';
 import { callFn, errText, supabase } from '../lib/supabase';
 import { dateInput, day, manilaIso, peso, plural, time } from '../lib/format';
 import { parseTrack } from '../lib/gpx';
+import { ConnectWithStrava, PoweredByStrava } from '../components/Strava';
 
 export type PassRow = {
   id: string; passed_at: string; manual: boolean; distance_m: number | null; shoot_id: string; place_label: string | null;
@@ -98,17 +99,18 @@ export default function Rider() {
             <div className="between"><h3>Strava connected</h3><span className="badge live">{strava.athlete_name || 'Connected'}</span></div>
             <p className="note">New rides come in on their own. {strava.write_ok ? 'When a pitikero caught you, we add one line to that ride.' : 'You chose not to let Pitik add a line to your rides; you will still get an email.'}</p>
             <button className="btn alt small" disabled={busy} onClick={sync}>{busy ? 'Checking…' : 'Check my last 7 days now'}</button>
+            <PoweredByStrava />
           </>
         ) : stravaReady === false ? (
           <>
-            <div className="between"><h3>Strava</h3><span className="badge">Coming soon</span></div>
-            <p className="note" style={{ color: 'var(--ink2)', fontSize: 14 }}>Soon you can connect Strava once and every ride comes in on its own. For now, upload your ride file or tell us when you passed, below.</p>
+            <div className="between"><h3>Strava</h3><span className="badge">Slots full for now</span></div>
+            <p className="note" style={{ color: 'var(--ink2)', fontSize: 14 }}>Strava connections are limited for now. Upload your ride file or tell us when you passed, below.</p>
           </>
         ) : (
           <>
-            <h3>Connect Strava once</h3>
+            <h3>Connect once, rides come in on their own</h3>
             <p className="note" style={{ color: 'var(--ink2)', fontSize: 14 }}>Pitik reads when and where you rode to see if you passed a pitikero while they were shooting. We keep only those moments, never your full route.</p>
-            <button className="btn sun" disabled={busy} onClick={connect}>{busy ? 'Opening Strava…' : 'Connect Strava'}</button>
+            <ConnectWithStrava disabled={busy} onClick={connect} />
           </>
         )}
         <Msg text={msg?.t} kind={msg?.k} />

@@ -5,6 +5,7 @@ import { publicUrl, supabase } from '../lib/supabase';
 import { day, peso, plural, time } from '../lib/format';
 import { useCart } from '../lib/cart';
 import { useRides, type PassRow } from './Rider';
+import { PoweredByStrava, ViewOnStrava } from '../components/Strava';
 
 type Photo = { id: string; pitikero_id: string; taken_at: string; preview_path: string; thumb_path: string; price: number; bought: boolean };
 
@@ -27,6 +28,7 @@ export default function RidePage() {
     <Layout>
       <div>
         <span className="note">{ride.started_at ? day(ride.started_at) : ''}{ride.source === 'strava' ? ' · from Strava' : ride.source === 'gpx' ? ' · from your ride file' : ''}</span>
+        {ride.source === 'strava' && ride.strava_activity_id ? <div className="row" style={{ alignItems: 'center', gap: 12 }}><ViewOnStrava activityId={ride.strava_activity_id} /><PoweredByStrava /></div> : null}
         <h1>There you are.</h1>
         <p className="lead">{names.length ? `Nakita ka ng ${plural(names.length, 'pitikero')}. Tap the ones that are you.` : 'No shots of you yet. Pitikeros may still be uploading.'}</p>
       </div>
