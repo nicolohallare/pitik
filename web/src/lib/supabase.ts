@@ -28,3 +28,12 @@ export const errText = (e: unknown) => {
   if (/Failed to fetch|NetworkError/i.test(m)) return 'No connection. Check your signal and try again.';
   return m;
 };
+
+/** Unused Pitik credit for the signed-in user only (admins can read everyone's rows, so always filter). */
+export async function myCredit(): Promise<number> {
+  const { data: s } = await supabase.auth.getSession();
+  const uid = s.session?.user.id;
+  if (!uid) return 0;
+  const { data } = await supabase.from('credits').select('amount').eq('user_id', uid).is('used_order_id', null);
+  return (data ?? []).reduce((a: number, r: { amount: number }) => a + Number(r.amount), 0);
+}

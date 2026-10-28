@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Layout, Msg } from '../components/ui';
-import { callFn, errText, supabase } from '../lib/supabase';
+import { callFn, errText, supabase, myCredit } from '../lib/supabase';
 import { dateInput, day, manilaIso, peso, plural, time } from '../lib/format';
 import { parseTrack } from '../lib/gpx';
 import { ConnectWithStrava, PoweredByStrava } from '../components/Strava';
@@ -34,8 +34,7 @@ export default function Rider() {
   useEffect(() => {
     callFn<{ configured: boolean }>('strava', 'status').then((r) => setStravaReady(!!r.configured)).catch(() => setStravaReady(false));
     supabase.rpc('my_strava').then(({ data }) => setStrava((data as typeof strava) ?? null));
-    supabase.from('credits').select('amount').is('used_order_id', null).then(({ data }) =>
-      setCredit((data ?? []).reduce((a: number, r: { amount: number }) => a + Number(r.amount), 0)));
+    myCredit().then(setCredit);
   }, []);
 
   // Back from Strava: finish linking as the signed-in rider

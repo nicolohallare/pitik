@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Layout, Msg, Seg } from '../components/ui';
 import { useCart } from '../lib/cart';
-import { callFn, errText, publicUrl, supabase } from '../lib/supabase';
+import { callFn, errText, publicUrl, supabase, myCredit } from '../lib/supabase';
 import { peso, plural, time } from '../lib/format';
 
 export default function Checkout() {
@@ -18,8 +18,7 @@ export default function Checkout() {
       const m = Object.fromEntries((data ?? []).map((r: { key: string; value: string }) => [r.key, Number(r.value)]));
       setCfg({ per: m.pitik_fee_per_photo ?? 10, cap: m.pitik_fee_cap ?? 30 });
     });
-    supabase.from('credits').select('amount').is('used_order_id', null).then(({ data }) =>
-      setCredit((data ?? []).reduce((a: number, r: { amount: number }) => a + Number(r.amount), 0)));
+    myCredit().then(setCredit);
   }, []);
 
   const items = Object.values(cart.items);
