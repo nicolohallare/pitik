@@ -37,7 +37,7 @@ export default function Account() {
         ) : profile?.phone ? <p className="note">Forgot your PIN? Message the Pitik team and we'll set a new one for you.</p> : null}
         {strava && (
           <div className="stack">
-            <p className="note">Strava: {strava.athlete_name || 'connected'}. Pitik keeps only the moments you passed a pitikero.</p>
+            <p className="note">Strava connected ({strava.athlete_name || 'your account'}). Pitik keeps only the moments you passed a pitikero.</p>
             <button className="btn alt small" onClick={disconnect}>Disconnect Strava</button>
           </div>
         )}

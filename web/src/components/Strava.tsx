@@ -16,10 +16,10 @@ export function ConnectWithStrava({ onClick, disabled }: { onClick: () => void; 
 }
 
 /** Official "Powered by Strava" logo, shown wherever Strava data appears. */
-export function PoweredByStrava() {
+export function PoweredByStrava({ size = 18 }: { size?: number }) {
   const [missing, setMissing] = useState(false);
   if (missing) return <span className="note">Powered by Strava</span>;
-  return <img src="/strava/api_logo_pwrdBy_strava_horiz_orange.svg" alt="Powered by Strava" onError={() => setMissing(true)} style={{ height: 22, width: 'auto', display: 'block', marginTop: 4 }} />;
+  return <img src="/strava/api_logo_pwrdBy_strava_horiz_orange.svg" alt="Powered by Strava" onError={() => setMissing(true)} style={{ height: size, width: 'auto', display: 'block', marginTop: 4 }} />;
 }
 
 /** "View on Strava" link to the original activity. */
