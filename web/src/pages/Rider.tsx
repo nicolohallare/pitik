@@ -88,51 +88,77 @@ export default function Rider() {
   const withPhotos = (rides ?? []).filter((r) => r.passes.some((p) => p.count > 0));
   const others = (rides ?? []).filter((r) => !r.passes.some((p) => p.count > 0));
 
+  const fresh = !withPhotos.length;
+  const first = (strava?.athlete_name ?? '').split(/[\s[(]/)[0].slice(0, 14);
+
+  const stravaBlock = strava === undefined ? null : strava ? (
+    <div className="connected">
+      <span className="dot" aria-hidden="true" />
+      <span><b>Strava connected</b>{first ? <span className="note"> as {first}</span> : null}</span>
+      <button className="link small" disabled={busy} onClick={sync}>{busy ? 'Checking…' : 'Check my rides'}</button>
+    </div>
+  ) : stravaReady === false ? (
+    <div className="connect-card">
+      <h3>Strava slots are full for now</h3>
+      <p className="note">Upload your ride file or tell us when you passed, below.</p>
+    </div>
+  ) : (
+    <div className="connect-card">
+      <h3>Connect Strava once</h3>
+      <p className="note">Pitik checks when you passed a pitikero. We keep only those moments, never your full route.</p>
+      <ConnectWithStrava disabled={busy} onClick={connect} />
+    </div>
+  );
+
   return (
     <Layout>
-      <div><h1>Your rides</h1></div>
-      {credit > 0 && <p className="msg ok">You have {peso(credit)} Pitik credit for your first photos.</p>}
+      {fresh ? (
+        <section className="hero" aria-labelledby="hero-h">
+          <img src="/img/rider-taktak.webp" alt="A rider in a gold helmet speeding down the Taktak road" width={1100} height={1018} />
+          <div className="hero-text">
+            <h1 id="hero-h">Ride past Taktak. Your photos find you.</h1>
+            <p>Pitikeros shoot riders every morning on the road to Taktak Falls. Pitik matches their shots to your ride.</p>
+          </div>
+        </section>
+      ) : <h1>Your rides</h1>}
 
-      <section className="card">
-        {strava === undefined ? <p className="note">Loading…</p> : strava ? (
-          <>
-            <div className="between"><h3>Strava connected</h3><span className="badge live">{strava.athlete_name || 'Connected'}</span></div>
-            <p className="note">New rides come in on their own. {strava.write_ok ? 'When a pitikero caught you, we add one line to that ride.' : 'You chose not to let Pitik add a line to your rides; you will still get an email.'}</p>
-            <button className="btn alt small" disabled={busy} onClick={sync}>{busy ? 'Checking…' : 'Check my last 7 days now'}</button>
-            <PoweredByStrava />
-          </>
-        ) : stravaReady === false ? (
-          <>
-            <div className="between"><h3>Strava</h3><span className="badge">Slots full for now</span></div>
-            <p className="note" style={{ color: 'var(--ink2)', fontSize: 14 }}>Strava connections are limited for now. Upload your ride file or tell us when you passed, below.</p>
-          </>
-        ) : (
-          <>
-            <h3>Connect once, rides come in on their own</h3>
-            <p className="note" style={{ color: 'var(--ink2)', fontSize: 14 }}>Pitik reads when and where you rode to see if you passed a pitikero while they were shooting. We keep only those moments, never your full route.</p>
-            <ConnectWithStrava disabled={busy} onClick={connect} />
-          </>
-        )}
-        <Msg text={msg?.t} kind={msg?.k} />
-      </section>
+      {stravaBlock}
+      <Msg text={msg?.t} kind={msg?.k} />
 
-      {rides === null ? <p className="note">Loading rides…</p> : (
-        <>
-          {withPhotos.map((r) => <RideCard key={r.id} r={r} />)}
-          {!withPhotos.length && <p className="note">No photos of you yet. When you ride past a pitikero who's using Pitik, it shows up here.</p>}
-          {others.length > 0 && (
-            <details className="card flat">
-              <summary style={{ cursor: 'pointer', minHeight: 44, display: 'flex', alignItems: 'center' }}>{plural(others.length, 'other ride')} with no photos yet</summary>
-              <div className="stack" style={{ paddingTop: 8 }}>
-                {others.map((r) => <div key={r.id} className="between"><span>{r.name || 'Ride'}</span><span className="note">{r.started_at ? day(r.started_at) : ''}{r.passes.length ? ` · passed ${plural(r.passes.length, 'pitikero')}, waiting for uploads` : ''}</span></div>)}
-              </div>
-            </details>
-          )}
-        </>
+      {credit > 0 && (
+        <div className="ticket">
+          <span className="amt">{peso(credit)}</span>
+          <span><b>On us, for your first photos.</b><br /><span className="note">Used automatically when you buy.</span></span>
+        </div>
+      )}
+
+      {rides === null ? <p className="note">Loading rides…</p> : withPhotos.map((r) => <RideCard key={r.id} r={r} />)}
+
+      {fresh && (
+        <section aria-labelledby="next-h">
+          <h2 id="next-h" className="sec">What happens next</h2>
+          <ol className="road">
+            <li><b>Ride past the pitikeros</b><span>Any morning at Taktak. {strava ? 'Strava records when you passed. Nothing else to do.' : 'Your ride app records when you passed.'}</span></li>
+            <li><b>They upload by noon</b><span>Each pitikero posts their morning shots the same day.</span></li>
+            <li><b>Your shots appear here</b><span>{strava?.write_ok !== false ? 'We also add one line to that ride on Strava. ' : ''}Previews are free. Buy only the ones you like, from ₱50. The pitikero keeps all of it.</span></li>
+          </ol>
+        </section>
+      )}
+
+      {others.length > 0 && (
+        <details className="card flat">
+          <summary style={{ cursor: 'pointer', minHeight: 44, display: 'flex', alignItems: 'center' }}>{plural(others.length, 'other ride')} with no photos yet</summary>
+          <div className="stack" style={{ paddingTop: 8 }}>
+            {others.map((r) => <div key={r.id} className="between"><span>{r.name || 'Ride'}</span><span className="note">{r.started_at ? day(r.started_at) : ''}{r.passes.length ? ` · passed ${plural(r.passes.length, 'pitikero')}, waiting for uploads` : ''}</span></div>)}
+          </div>
+        </details>
       )}
 
       <NoStrava onAdded={load} open={stravaReady === false && !strava} />
-      <p className="note"><Link to="/photos">Your purchased photos →</Link></p>
+      <div className="between">
+        <Link to="/photos" className="note">Your purchased photos</Link>
+        {strava && <PoweredByStrava size={14} />}
+      </div>
     </Layout>
   );
 }
@@ -187,7 +213,7 @@ function NoStrava({ onAdded, open }: { onAdded: () => void; open?: boolean }) {
 
   return (
     <details className="card flat" open={open}>
-      <summary style={{ cursor: 'pointer', minHeight: 44, display: 'flex', alignItems: 'center', fontWeight: 600 }}>No Strava? Find your photos another way</summary>
+      <summary style={{ cursor: 'pointer', minHeight: 44, display: 'flex', alignItems: 'center', fontWeight: 600 }}>Other ways to find your photos</summary>
       <div className="stack" style={{ paddingTop: 10 }}>
         <div className="pick"><div className="btn alt small" aria-hidden="true">{busy ? 'Reading…' : 'Upload a ride file (GPX from Garmin, Wahoo, Coros)'}</div>
           <input type="file" accept=".gpx,.tcx,application/gpx+xml,application/xml,text/xml" aria-label="Upload a GPX ride file" onChange={(e) => { gpx(e.target.files?.[0]); e.target.value = ''; }} /></div>
