@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useCallback, useEffect, useState } from 'react';
 import { Layout, Msg, Seg } from '../components/ui';
 import { ClockCheck, type Shoot } from '../components/ClockCheck';
@@ -19,7 +20,7 @@ export default function Pitikero() {
         {pitikero.founding && <span className="badge sun">Founding pitikero</span>}
       </div>
       {pitikero.status === 'pending' && <p className="msg">Thanks for joining! The Pitik team will activate your account soon. You can already check in and upload; riders see your shots once you're active.</p>}
-      {pitikero.status === 'paused' && <p className="msg err">Your account is paused. Riders can't see your shots right now. Message the Pitik team.</p>}
+      {pitikero.status === 'paused' && <p className="msg err">Your account is paused. Riders can't see your shots right now. <Link to="/support">Message the Pitik team</Link>.</p>}
       <Seg label="Section" value={tab} onChange={setTab} options={[
         { v: 'today', label: 'Today' }, { v: 'kita', label: 'Earnings' }, { v: 'bayad', label: 'Payouts' }, { v: 'profile', label: 'Profile' }]} />
       {tab === 'today' && <><AllowanceCard /><Today pk={pitikero} /></>}

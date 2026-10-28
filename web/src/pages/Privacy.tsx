@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { Layout } from '../components/ui';
 
 export default function Privacy() {
@@ -18,7 +19,7 @@ export default function Privacy() {
           <li>We never sell your data or post your photos without asking.</li>
         </ul>
         <h3>Your choices</h3>
-        <p style={{ margin: 0 }}>Disconnect Strava or turn off emails anytime in Account. To delete your account and data, email the Pitik team and we'll do it within 7 days.</p>
+        <p style={{ margin: 0 }}>Disconnect Strava or turn off emails anytime in Account. To delete your account and data, <Link to="/support">message us</Link> and we'll do it within 7 days.</p>
         <p className="note">Pitik is operated by Techwave. We follow the Philippine Data Privacy Act of 2012.</p>
       </section>
     </Layout>

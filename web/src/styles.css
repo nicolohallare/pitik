@@ -155,3 +155,4 @@ details[open] > summary::after { content: "–"; }
 .banner { border-radius: 20px; overflow: hidden; margin: 0 -4px; background: #2A241D; }
 .banner img { display: block; width: 100%; height: auto; aspect-ratio: 5 / 2; object-fit: cover; object-position: 40% 22%; }
 .eyebrow, .who { text-transform: none; letter-spacing: 0; font-size: 14px; }
+details.card.flat:not([open]) { gap: 0; }

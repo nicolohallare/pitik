@@ -280,7 +280,7 @@ function Orders() {
   );
 }
 
-type Fb = { id: number; created_at: string; name: string | null; role: string | null; would_use: string | null; checkin_easy: number | null; price_ok: string | null; liked: string | null; confusing: string | null; missing: string | null; contact: string | null };
+type Fb = { id: number; created_at: string; name: string | null; role: string | null; would_use: string | null; checkin_easy: number | null; price_ok: string | null; liked: string | null; confusing: string | null; missing: string | null; contact: string | null; page: string | null };
 function FeedbackList() {
   const [rows, setRows] = useState<Fb[] | null>(null);
   useEffect(() => { supabase.from('feedback').select('*').order('created_at', { ascending: false }).limit(200).then(({ data }) => setRows((data ?? []) as Fb[])); }, []);
@@ -290,10 +290,10 @@ function FeedbackList() {
     <div className="stack">
       {rows.map((f) => (
         <section key={f.id} className="card flat">
-          <div className="between"><b>{f.name || 'Anonymous'}{f.role ? ` · ${f.role}` : ''}</b><span className="note">{day(f.created_at)}</span></div>
+          <div className="between"><b>{f.page === 'support' ? <span className="badge sun" style={{ marginRight: 6 }}>Support</span> : null}{f.name || 'Anonymous'}{f.role ? ` · ${f.role}` : ''}</b><span className="note">{day(f.created_at)}</span></div>
           <div className="row">{f.would_use && <span className="badge">Would use: {f.would_use}</span>}{f.checkin_easy && <span className="badge">Check-in: {f.checkin_easy}/5</span>}{f.price_ok && <span className="badge">Price: {f.price_ok}</span>}</div>
           {f.liked && <p style={{ margin: 0 }}><b>Liked:</b> {f.liked}</p>}
-          {f.confusing && <p style={{ margin: 0 }}><b>Confusing:</b> {f.confusing}</p>}
+          {f.confusing && <p style={{ margin: 0 }}><b>{f.page === 'support' ? 'Message' : 'Confusing'}:</b> {f.confusing}</p>}
           {f.missing && <p style={{ margin: 0 }}><b>Missing:</b> {f.missing}</p>}
           {f.contact && <p className="note">Contact: {f.contact}</p>}
         </section>

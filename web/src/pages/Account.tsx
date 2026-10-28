@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Layout, Msg } from '../components/ui';
@@ -34,7 +35,7 @@ export default function Account() {
             <input type="checkbox" checked={notify} onChange={(e) => toggle(e.target.checked)} style={{ width: 22, height: 22 }} />
             Email me once per ride when a pitikero caught me
           </label>
-        ) : profile?.phone ? <p className="note">Forgot your PIN? Message the Pitik team and we'll set a new one for you.</p> : null}
+        ) : profile?.phone ? <p className="note">Forgot your PIN? <Link to="/support">Contact support</Link> and we'll set a new one for you.</p> : null}
         {strava && (
           <div className="stack">
             <p className="note">Strava connected ({strava.athlete_name || 'your account'}). Pitik keeps only the moments you passed a pitikero.</p>

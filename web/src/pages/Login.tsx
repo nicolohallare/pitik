@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Layout, Msg } from '../components/ui';
@@ -68,7 +69,7 @@ export default function Login() {
           {mode === 'create'
             ? <button type="button" className="link" onClick={() => setMode('signin')}>I already have an account</button>
             : <button type="button" className="btn alt" onClick={() => setMode('create')}>New to Pitik? Create an account</button>}
-          <p className="note">Forgot your PIN? Message the Pitik team and we'll set a new one. · <button type="button" className="link" style={{ display: 'inline', minHeight: 0, padding: 0 }} onClick={() => setMode('email')}>Use email instead</button></p>
+          <p className="note">Forgot your PIN? <Link to="/support">Contact support</Link> and we'll set a new one. · <button type="button" className="link" style={{ display: 'inline', minHeight: 0, padding: 0 }} onClick={() => setMode('email')}>Use email instead</button></p>
         </form>
       )}
     </Layout>

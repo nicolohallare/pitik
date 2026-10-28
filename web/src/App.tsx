@@ -15,6 +15,7 @@ const Admin = lazy(() => import('./pages/Admin'));
 import Account from './pages/Account';
 import Feedback from './pages/Feedback';
 import Privacy from './pages/Privacy';
+import Support from './pages/Support';
 import NotFound from './pages/NotFound';
 
 export default function App() {
@@ -36,6 +37,7 @@ export default function App() {
             <Route path="/account" element={<RequireAuth><Account /></RequireAuth>} />
             <Route path="/feedback" element={<Feedback />} />
             <Route path="/privacy" element={<Privacy />} />
+            <Route path="/support" element={<Support />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           </Suspense>
