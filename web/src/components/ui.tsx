@@ -24,7 +24,7 @@ export function Layout({ children, wide }: { children: ReactNode; wide?: boolean
           {session ? (
             <>
               <NavLink to="/rider">Rides</NavLink>
-              <NavLink to="/pitikero">{pitikero ? 'Pitikero' : 'Pitikero ako'}</NavLink>
+              <NavLink to="/pitikero">{pitikero ? 'Pitikero' : 'For pitikeros'}</NavLink>
               {profile?.is_admin && <NavLink to="/admin">Admin</NavLink>}
               <NavLink to="/account">Account</NavLink>
             </>

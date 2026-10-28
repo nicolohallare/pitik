@@ -32,7 +32,7 @@ export default function OrderPage() {
       {o.status === 'paid' ? (
         <>
           <section className="card dark">
-            <span className="hand" style={{ fontSize: 34, color: '#F6E3C4' }}>salamat!</span>
+            <span className="hand" style={{ fontSize: 34, color: '#F6E3C4' }}>Thank you!</span>
             <p style={{ margin: 0 }}>{peso(Number(o.photos_amount) + Number(o.tips_amount))} goes to the pitikeros on Monday. Here are your photos.</p>
           </section>
           <PhotoDownloads orderId={o.id} />

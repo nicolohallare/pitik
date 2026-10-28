@@ -55,26 +55,26 @@ export function ClockCheck({ shoot, onChange }: { shoot: Shoot; onChange: () => 
   if (!open) {
     if (suspicious && !shoot.clock_checked) return (
       <div className="msg" role="status">
-        <b>Mukhang mali ang oras ng camera mo.</b> Your shots' times don't match when you checked in, so riders might not find them.
-        <button className="btn small" style={{ marginTop: 8 }} onClick={() => setOpen(true)}>Ayusin ang oras (10 segundo)</button>
+        <b>Your camera's clock looks off.</b> Your shots' times don't match when you checked in, so riders might not find them.
+        <button className="btn small" style={{ marginTop: 8 }} onClick={() => setOpen(true)}>Fix the time (10 seconds)</button>
       </div>
     );
     if (shoot.clock_checked && Math.abs(off) >= 60e3) return (
       <p className="note">Camera clock fixed: {fmtOffset(off)} {off > 0 ? 'behind' : 'ahead'}. All shot times adjusted. <button className="link" style={{ display: 'inline', minHeight: 0, padding: 0 }} onClick={() => setOpen(true)}>Change</button></p>
     );
-    return <button className="link" style={{ alignSelf: 'flex-start' }} onClick={() => setOpen(true)}>Mali ang oras ng camera ko</button>;
+    return <button className="link" style={{ alignSelf: 'flex-start' }} onClick={() => setOpen(true)}>My camera's time is wrong</button>;
   }
   return (
     <div className="card flat">
       <h3>Camera clock</h3>
-      <p className="note" style={{ color: 'var(--ink2)', fontSize: 15 }}>Tingnan ang oras sa camera mo ngayon, tapos i-type dito.</p>
+      <p className="note" style={{ color: 'var(--ink2)', fontSize: 15 }}>Check the time on your camera right now and type it here.</p>
       <div className="row">
-        <div className="field"><label htmlFor="ckt">Oras sa camera</label>
+        <div className="field"><label htmlFor="ckt">Time on your camera</label>
           <input id="ckt" type="time" value={cam} onChange={(e) => setCam(e.target.value)} /></div>
-        <div className="field"><label>Oras ngayon (phone)</label><input value={hhmm(Date.now())} readOnly tabIndex={-1} /></div>
+        <div className="field"><label>Time now (phone)</label><input value={hhmm(Date.now())} readOnly tabIndex={-1} /></div>
       </div>
       <button className="btn green small" disabled={busy} onClick={() => save()}>{busy ? 'Saving…' : 'Save'}</button>
-      <button className="btn alt small" disabled={busy} onClick={() => save(0)}>Tama naman ang oras ng camera ko</button>
+      <button className="btn alt small" disabled={busy} onClick={() => save(0)}>My camera's time is right</button>
       <button className="link" onClick={() => setOpen(false)}>Cancel</button>
       <Msg text={err} kind="err" />
     </div>

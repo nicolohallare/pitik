@@ -53,10 +53,10 @@ export default function Checkout() {
   if (!items.length) return <Layout><h1>Nothing picked yet</h1><p className="note"><Link to="/rider">Back to your rides</Link></p></Layout>;
   return (
     <Layout>
-      <div><span className="who">bayad at salamat</span><h1>Pay, tip, download</h1></div>
+      <div><h1>Pay, tip, download</h1></div>
       {[...byPk.entries()].map(([pk, g]) => (
         <section key={pk} className="card">
-          <div className="between"><span className="who" style={{ fontSize: 24 }}>{g.name}</span><span className="note">{plural(g.items.length, 'photo')}</span></div>
+          <div className="between"><span className="pkname">{g.name}</span><span className="note">{plural(g.items.length, 'photo')}</span></div>
           <div className="grid">{g.items.map((i) => (
             <button key={i.id} className="ph on" aria-label={`Remove photo at ${time(i.taken_at)}`} onClick={() => cart.toggle(i)}>
               <img src={publicUrl(i.thumb)} alt="" /><span className="tag">{time(i.taken_at)}</span>

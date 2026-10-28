@@ -90,7 +90,7 @@ export default function Rider() {
 
   return (
     <Layout>
-      <div><span className="who">ang rider</span><h1>Your rides</h1></div>
+      <div><h1>Your rides</h1></div>
       {credit > 0 && <p className="msg ok">You have {peso(credit)} Pitik credit for your first photos.</p>}
 
       <section className="card">
@@ -144,7 +144,7 @@ function RideCard({ r }: { r: RideRow }) {
   return (
     <Link to={`/ride/${r.id}`} className="card" style={{ textDecoration: 'none' }}>
       <div className="between"><h3>{r.name || 'Ride'}</h3><span className="note">{r.started_at ? day(r.started_at) : ''}</span></div>
-      <p style={{ margin: 0 }}>Nakita ka ng {plural(names.length, 'pitikero')}: {plural(total, 'photo')}</p>
+      <p style={{ margin: 0 }}>{plural(names.length, 'pitikero')} caught you · {plural(total, 'photo')}</p>
       <div className="row">{caught.map((p) => <span key={p.id} className="badge sun">{p.pitikero.name} · {time(p.passed_at)}</span>)}</div>
     </Link>
   );

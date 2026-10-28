@@ -85,18 +85,18 @@ export function Upload({ shoot, uid, label, onUploaded }: { shoot: Shoot; uid: s
         <input type="file" accept="image/jpeg,.jpg,.jpeg" multiple disabled={phase === 'checking' || phase === 'uploading'}
           aria-label="Choose shots to upload" onChange={(e) => { const fs = Array.from(e.target.files ?? []); e.target.value = ''; run(fs); }} />
       </div>
-      <p className="note">Original files lang, mula sa SD card o sa camera app. Mas mabilis sa WiFi. Pwede mong isara at ituloy mamaya, hindi madodoble.</p>
+      <p className="note">Use the original files from your SD card or camera app. Faster on WiFi. You can close this and continue later; nothing uploads twice.</p>
 
       {phase === 'checking' && <p className="msg">Checking the camera time on each shot…</p>}
       {rep && (
         <div className="stack" aria-live="polite">
           {rep.total > 0 && (
-            <p className="msg ok">✓ {plural(rep.total, 'shot')} na may oras ng camera{rep.cams.length ? ` · ${rep.cams.join(', ')}` : ''}</p>
+            <p className="msg ok">✓ {plural(rep.total, 'shot')} with camera time{rep.cams.length ? ` · ${rep.cams.join(', ')}` : ''}</p>
           )}
           {rep.skipped > 0 && <p className="msg">{plural(rep.skipped, 'shot')} already uploaded, skipped.</p>}
           {Object.entries(rep.bad).map(([k, n]) => <p key={k} className="msg err">{n} {reasonText[k]}</p>)}
-          {rep.days.length > 1 && <p className="msg">Ang shots ay galing sa {rep.days.length} araw ({rep.days.join(', ')}). Isang umaga lang dapat bawat shoot.</p>}
-          {rep.total > 0 && !rep.cams.length && <p className="msg">Walang camera info ang mga shots. Baka na-edit o na-export ulit. Ok lang, basta tama ang oras.</p>}
+          {rep.days.length > 1 && <p className="msg">These shots are from {rep.days.length} different days ({rep.days.join(', ')}). Each shoot should be one morning.</p>}
+          {rep.total > 0 && !rep.cams.length && <p className="msg">These shots have no camera info, maybe because they were edited or re-exported. That's fine as long as the time is right.</p>}
           {phase === 'uploading' && (
             <>
               <div className="progress" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}><i style={{ width: pct + '%' }} /></div>

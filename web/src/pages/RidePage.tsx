@@ -28,9 +28,9 @@ export default function RidePage() {
     <Layout>
       <div>
         <span className="note">{ride.started_at ? day(ride.started_at) : ''}{ride.source === 'strava' ? ' · from Strava' : ride.source === 'gpx' ? ' · from your ride file' : ''}</span>
-        {ride.source === 'strava' && ride.strava_activity_id ? <div className="row" style={{ alignItems: 'center', gap: 12 }}><ViewOnStrava activityId={ride.strava_activity_id} /><PoweredByStrava size={14} /></div> : null}
         <h1>There you are.</h1>
-        <p className="lead">{names.length ? `Nakita ka ng ${plural(names.length, 'pitikero')}. Tap the ones that are you.` : 'No shots of you yet. Pitikeros may still be uploading.'}</p>
+        <p className="lead">{names.length ? `${plural(names.length, 'pitikero')} caught you. Tap the ones that are you.` : 'No shots of you yet. Pitikeros may still be uploading.'}</p>
+        {ride.source === 'strava' && ride.strava_activity_id ? <div className="strava-row"><ViewOnStrava activityId={ride.strava_activity_id} /><PoweredByStrava size={14} /></div> : null}
       </div>
       {!ride.passes.some((p) => p.manual) && (
         <div className="stack"><span className="note">How much time around each pass?</span>
@@ -65,7 +65,7 @@ function PassBlock({ p, win, onZoom }: { p: PassRow; win: number; onZoom: (x: Ph
   return (
     <section className="card">
       <div className="between">
-        <span className="who" style={{ fontSize: 26 }}>{p.pitikero.name}</span>
+        <span className="pkname">{p.pitikero.name}</span>
         <span className="note">{p.place_label ? p.place_label + ' · ' : ''}{p.manual ? 'around ' : 'you passed at '}{time(p.passed_at)}</span>
       </div>
       {photos === null ? <p className="note">Loading shots…</p> : photos.length === 0 ? (
@@ -85,7 +85,9 @@ function PassBlock({ p, win, onZoom }: { p: PassRow; win: number; onZoom: (x: Ph
                     <span className="tag">{time(x.taken_at)}</span>
                     {x.bought ? <span className="own badge live">Yours</span> : <span className="chk"><Check /></span>}
                   </button>
-                  <button type="button" className="link" style={{ fontSize: 13 }} onClick={() => onZoom(x)}>Bigger</button>
+                  <button type="button" className="zoom" aria-label={`View photo at ${time(x.taken_at)} larger`} onClick={() => onZoom(x)}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></svg>
+                  </button>
                 </div>
               );
             })}

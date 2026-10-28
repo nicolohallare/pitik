@@ -88,9 +88,9 @@ export async function prepareShot(file: File, label: string) {
 }
 
 export const reasonText: Record<string, string> = {
-  'no-time': 'walang oras ng camera, hindi isinama. Kadalasan galing ito sa Messenger, FB, Viber o screenshot. Kunin ang original sa SD card o sa camera app.',
-  raw: 'RAW file, hindi isinama. JPEG ang i-upload.',
-  heic: 'HEIC file, hindi isinama. I-set ang camera o phone sa JPEG (Most Compatible).',
-  'not-image': 'hindi litrato (JPEG lang).',
-  unreadable: 'hindi mabasa ang file.',
+  'no-time': 'have no camera time and were skipped. These usually come from Messenger, FB, Viber or screenshots. Use the originals from your SD card or camera app.',
+  raw: 'RAW files skipped. Upload JPEGs.',
+  heic: 'HEIC files skipped. Set your camera or phone to JPEG (Most Compatible).',
+  'not-image': 'are not photos (JPEG only).',
+  unreadable: 'could not be read.',
 };

@@ -50,7 +50,7 @@ function Payouts() {
     <>
       <section className="card flat">
         <div className="between"><h3>Due this Monday</h3><b className="num">{peso(due.reduce((a, r) => a + Number(r.unpaid), 0))}</b></div>
-        <p className="note">Everyone with ₱200 or more unpaid. Send by GCash, then record the ref and screenshot here. The pitikero sees it on their Bayad page.</p>
+        <p className="note">Everyone with ₱200 or more unpaid. Send by GCash, then record the ref and screenshot here. The pitikero sees it on their Payouts page.</p>
       </section>
       <div className="scroll-x">
         <table className="t">
@@ -185,7 +185,7 @@ function TrialDays() {
   useEffect(() => { load(); }, [load]);
   async function save() {
     const { error } = await supabase.rpc('admin_set_trial_days', { p_days: days });
-    setMsg(error ? { t: errText(error), k: 'err' } : { t: 'Saved. Pitikeros see the checklist on their Ngayon tab.', k: 'ok' });
+    setMsg(error ? { t: errText(error), k: 'err' } : { t: 'Saved. Pitikeros see the checklist on their Today tab.', k: 'ok' });
     load();
   }
   async function award() {

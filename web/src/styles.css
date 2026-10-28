@@ -1,9 +1,9 @@
-/* Pitik — "Sunday ride" look: warm paper, ink, sun orange, leaf green. Fraunces + Instrument Sans + Caveat. */
+/* Pitik: warm paper, ink, sun orange, leaf green. Fraunces (display) + Instrument Sans (text), self-hosted. */
 :root {
   --bg: #F4EFE6; --card: #FBF8F2; --line: #E2DACB; --ink: #1F1B16; --ink2: #4A443B; --muted: #6E655A;
   --sun: #B8441F; --sun-soft: #F6E3C4; --green: #44604F; --green-soft: #E1EBDF; --green-ink: #2E5A43;
   --on-dark: #FBF8F2; --danger: #A3271B;
-  --display: "Fraunces", Georgia, serif; --body: "Instrument Sans", system-ui, sans-serif; --hand: "Caveat", "Segoe Script", cursive;
+  --display: "Fraunces Variable", Georgia, serif; --body: "Instrument Sans Variable", system-ui, -apple-system, sans-serif; --hand: "Fraunces Variable", Georgia, serif;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
@@ -33,8 +33,9 @@ h1 { font-size: 34px; line-height: 1.05; }
 h2 { font-size: 24px; line-height: 1.1; }
 h3 { font-size: 18px; line-height: 1.2; }
 .lead { margin: 6px 0 0; color: var(--ink2); }
-.hand { font-family: var(--hand); font-weight: 600; color: var(--sun); line-height: 1; }
-.who { font-family: var(--hand); font-weight: 600; font-size: 22px; color: var(--sun); line-height: 1; }
+.hand { font-family: var(--display); font-style: italic; font-weight: 500; color: var(--sun); line-height: 1.1; }
+.who, .eyebrow { display: block; font: 600 12px/1.2 var(--body); letter-spacing: .09em; text-transform: uppercase; color: var(--sun); margin-bottom: 8px; }
+.pkname { font-family: var(--display); font-weight: 600; font-size: 22px; line-height: 1.1; color: var(--ink); }
 
 .card { background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 18px; display: flex; flex-direction: column; gap: 14px; }
 .card.flat { background: var(--bg); border-radius: 16px; padding: 14px; gap: 10px; }
@@ -65,7 +66,7 @@ h3 { font-size: 18px; line-height: 1.2; }
 .field textarea { padding: 10px 12px; min-height: 90px; resize: vertical; }
 .card.flat .field input { background: var(--card); }
 
-.note { font-size: 13px; color: var(--muted); margin: 0; }
+.note { font-size: 14px; line-height: 1.45; color: var(--muted); margin: 0; }
 .msg { font-size: 14px; border-radius: 12px; padding: 10px 12px; background: var(--sun-soft); color: var(--ink); margin: 0; }
 .msg.err { color: var(--danger); background: transparent; border: 1px solid var(--danger); }
 .msg.ok { background: var(--green-soft); color: var(--green-ink); }
@@ -110,3 +111,11 @@ table.t th { font-size: 12px; color: var(--muted); font-weight: 600; text-transf
 
 @media (max-width: 400px) { .nav a { font-size: 13px; padding: 8px 6px; } .logo { font-size: 24px; } }
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+.zoom { position: absolute; right: 6px; bottom: 6px; width: 32px; height: 32px; border-radius: 50%; border: 0; background: rgba(31,27,22,.6); color: #FBF8F2; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.zoom:focus-visible { outline: 3px solid var(--sun); outline-offset: 2px; }
+.strava-row { display: flex; align-items: center; gap: 14px; margin-top: 10px; flex-wrap: wrap; }
+.strava-row img { margin-top: 0 !important; }
+.listrow { display: flex; justify-content: space-between; align-items: center; gap: 12px; width: 100%; min-height: 48px; padding: 10px 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font: 500 15px var(--body); text-align: left; cursor: pointer; }
+.listrow[aria-pressed="true"] { border-color: var(--sun); box-shadow: inset 0 0 0 1px var(--sun); }
+.listrow .note { white-space: nowrap; }

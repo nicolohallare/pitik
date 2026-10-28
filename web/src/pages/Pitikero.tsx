@@ -15,13 +15,13 @@ export default function Pitikero() {
   return (
     <Layout>
       <div className="between">
-        <div><span className="who">ang pitikero</span><h1>{pitikero.name}</h1></div>
+        <div><span className="eyebrow">Pitikero</span><h1>{pitikero.name}</h1></div>
         {pitikero.founding && <span className="badge sun">Founding pitikero</span>}
       </div>
-      {pitikero.status === 'pending' && <p className="msg">Salamat sa pagsali! The Pitik team will activate your account soon. You can already check in and upload; riders see your shots once you're active.</p>}
+      {pitikero.status === 'pending' && <p className="msg">Thanks for joining! The Pitik team will activate your account soon. You can already check in and upload; riders see your shots once you're active.</p>}
       {pitikero.status === 'paused' && <p className="msg err">Your account is paused. Riders can't see your shots right now. Message the Pitik team.</p>}
       <Seg label="Section" value={tab} onChange={setTab} options={[
-        { v: 'today', label: 'Ngayon' }, { v: 'kita', label: 'Kita' }, { v: 'bayad', label: 'Bayad' }, { v: 'profile', label: 'Profile' }]} />
+        { v: 'today', label: 'Today' }, { v: 'kita', label: 'Earnings' }, { v: 'bayad', label: 'Payouts' }, { v: 'profile', label: 'Profile' }]} />
       {tab === 'today' && <><AllowanceCard /><Today pk={pitikero} /></>}
       {tab === 'kita' && <Kita />}
       {tab === 'bayad' && <Bayad />}
@@ -55,21 +55,21 @@ function Onboard() {
   }
   return (
     <form className="card" onSubmit={save}>
-      <span className="who">pitikero ka?</span>
-      <h1>Sumali sa Pitik</h1>
-      <p className="lead">Sa'yo ang buong presyo mo at lahat ng tips. Bayad sa GCash tuwing Lunes.</p>
-      <div className="field"><label htmlFor="n">Pangalan na makikita ng riders</label><input id="n" required maxLength={40} value={f.name} onChange={set('name')} placeholder="Jun Shots" /></div>
+      <span className="eyebrow">For pitikeros</span>
+      <h1>Join Pitik</h1>
+      <p className="lead">You keep your full price and every tip. Paid to your GCash every Monday.</p>
+      <div className="field"><label htmlFor="n">Name riders will see</label><input id="n" required maxLength={40} value={f.name} onChange={set('name')} placeholder="Jun Shots" /></div>
       <div className="field"><label htmlFor="h">Handle (for your Pitik link)</label><input id="h" maxLength={30} value={f.handle} onChange={set('handle')} placeholder="junshots" autoCapitalize="none" /></div>
       <div className="row">
         <div className="field"><label htmlFor="p">Presyo bawat photo (₱50 pataas)</label><input id="p" type="number" inputMode="numeric" min={50} max={1000} value={f.price} onChange={set('price')} /></div>
       </div>
       <div className="row">
         <div className="field"><label htmlFor="g">GCash number</label><input id="g" inputMode="tel" required value={f.gcash_number} onChange={set('gcash_number')} placeholder="09171234567" /></div>
-        <div className="field"><label htmlFor="gn">Pangalan sa GCash</label><input id="gn" required maxLength={80} value={f.gcash_name} onChange={set('gcash_name')} /></div>
+        <div className="field"><label htmlFor="gn">Name on GCash</label><input id="gn" required maxLength={80} value={f.gcash_name} onChange={set('gcash_name')} /></div>
       </div>
       <div className="field"><label htmlFor="fb">FB page (optional)</label><input id="fb" maxLength={120} value={f.fb_page} onChange={set('fb_page')} /></div>
       <p className="note">Your GCash details are only seen by you and the Pitik team, for your weekly payout.</p>
-      <button className="btn sun" disabled={busy}>{busy ? 'Saving…' : 'Sumali'}</button>
+      <button className="btn sun" disabled={busy}>{busy ? 'Saving…' : 'Join'}</button>
       <Msg text={err} kind="err" />
     </form>
   );
@@ -102,7 +102,7 @@ function Today({ pk }: { pk: PK }) {
         <section className="card">
           <div className="between">
             <div>
-              <span className="badge live">Nandito · {day(shoot.checked_in_at)}, {time(shoot.checked_in_at)}</span>
+              <span className="badge live">Checked in · {day(shoot.checked_in_at)}, {time(shoot.checked_in_at)}</span>
               <h2 style={{ marginTop: 8 }}>{shoot.place_label || 'Your spot'}</h2>
             </div>
             <a className="link" href={`https://maps.google.com/?q=${shoot.lat},${shoot.lon}`} target="_blank" rel="noreferrer">Map</a>
@@ -112,7 +112,7 @@ function Today({ pk }: { pk: PK }) {
           <ClockCheck shoot={shoot} onChange={load} />
           <Recent shootId={shoot.id} count={shoot.photo_count} />
           <Done shoot={shoot} onDone={load} />
-          <button className="link" onClick={() => setSel('')}>Bagong check-in (ibang spot o ibang araw)</button>
+          <button className="link" onClick={() => setSel('')}>New check-in (another spot or day)</button>
         </section>
       )}
       <Msg text={err} kind="err" />
@@ -121,7 +121,7 @@ function Today({ pk }: { pk: PK }) {
           <h3>Your shoots</h3>
           <div className="stack">
             {shoots.map((s) => (
-              <button key={s.id} className="btn alt small" style={{ justifyContent: 'space-between' }} aria-pressed={s.id === sel} onClick={() => setSel(s.id)}>
+              <button key={s.id} className="listrow" aria-pressed={s.id === sel} onClick={() => setSel(s.id)}>
                 <span>{day(s.checked_in_at)} · {s.place_label || 'Spot'}</span>
                 <span className="note">{plural(s.photo_count, 'shot')}{s.done_at ? ' · tapos' : ''}</span>
               </button>
@@ -173,13 +173,13 @@ function CheckIn({ pk, onDone, lastOffset }: { pk: PK; onDone: (id: string) => v
 
   return (
     <section className="card">
-      <span className="who">pagdating sa spot</span>
-      <h2>Nandito ako</h2>
+      <span className="eyebrow">When you arrive</span>
+      <h2>I'm here</h2>
       <p className="lead" style={{ marginTop: 0 }}>Tap this where you're standing. Your phone pins the exact spot, so riders who pass you get matched.</p>
-      <div className="field"><label htmlFor="pl">Spot name (optional)</label><input id="pl" maxLength={80} value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Taktak, pababa bago ang kanto" /></div>
-      <button className="btn green" disabled={busy} onClick={gps}>{busy && status ? status : 'Nandito ako · pin my exact spot'}</button>
+      <div className="field"><label htmlFor="pl">Spot name (optional)</label><input id="pl" maxLength={80} value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Taktak, downhill before the bend" /></div>
+      <button className="btn green" disabled={busy} onClick={gps}>{busy && status ? status : "I'm here · pin my exact spot"}</button>
       <details>
-        <summary className="note" style={{ cursor: 'pointer', minHeight: 44, display: 'flex', alignItems: 'center' }}>Walang GPS, o nakalimutang mag-check in?</summary>
+        <summary className="note" style={{ cursor: 'pointer', minHeight: 44, display: 'flex', alignItems: 'center' }}>No GPS, or forgot to check in?</summary>
         <div className="stack" style={{ paddingTop: 8 }}>
           <div className="field"><label htmlFor="pin">Google Maps pin (long-press your spot, copy the numbers)</label>
             <input id="pin" inputMode="decimal" value={pin} onChange={(e) => setPin(e.target.value)} placeholder="14.59472, 121.16750" /></div>
@@ -214,12 +214,12 @@ function Recent({ shootId, count }: { shootId: string; count: number }) {
 function Done({ shoot, onDone }: { shoot: Shoot; onDone: () => void }) {
   const [busy, setBusy] = useState(false);
   if (!shoot.photo_count) return null;
-  if (shoot.done_at) return <p className="msg ok">✓ Tapos ka na. Riders who passed you are being told now.</p>;
+  if (shoot.done_at) return <p className="msg ok">✓ All done. Riders who passed you are being told now.</p>;
   return (
     <div className="stack">
       <button className="btn sun" disabled={busy} onClick={async () => {
         setBusy(true); await supabase.rpc('shoot_uploaded', { p_shoot: shoot.id, p_done: true }); setBusy(false); onDone();
-      }}>Tapos na ako · lahat na-upload</button>
+      }}>I'm done · all shots uploaded</button>
       <p className="note">Riders get one message per ride, after everyone they passed is done (or by 8pm). Tap this when this shoot is complete.</p>
     </div>
   );
@@ -245,22 +245,22 @@ function Kita() {
   return (
     <>
       <section className="card dark">
-        <span className="note">Kita this week</span>
+        <span className="note">Earned this week</span>
         <span className="big-num">{peso(week)}</span>
         {k.week_tippers > 0 && <span className="hand" style={{ fontSize: 22, color: '#F6E3C4' }}>{plural(k.week_tippers, 'rider')} tipped you!</span>}
         <div className="lines" style={{ color: 'var(--on-dark)' }}>
           <div><span>{plural(k.week_photos, 'photo')} sold</span><span className="num">{peso(k.week_sales)}</span></div>
           <div><span>Tips</span><span className="num">{peso(k.week_tips)}</span></div>
-          <div><span>Kaltas ng Pitik</span><span>wala</span></div>
+          <div><span>Pitik's cut</span><span>₱0</span></div>
         </div>
       </section>
       <section className="card flat">
-        <div className="between"><h3>Para sa susunod na Lunes</h3><span className="num" style={{ fontWeight: 600 }}>{peso(k.unpaid)}</span></div>
+        <div className="between"><h3>Next Monday's payout</h3><span className="num" style={{ fontWeight: 600 }}>{peso(k.unpaid)}</span></div>
         <p className="note">Paid to your GCash every Monday when it's ₱200 or more.</p>
       </section>
       <section className="card">
         <h3>Latest</h3>
-        {!k.lines.length && <p className="note">Wala pa. Once riders buy your shots, they show up here.</p>}
+        {!k.lines.length && <p className="note">Nothing yet. Once riders buy your shots, they show up here.</p>}
         <div className="lines">
           {k.lines.map((l, i) => (
             <div key={i}><span>{kindLabel[l.kind] ?? l.kind}{l.note && l.kind !== 'tip' ? ` · ${l.note}` : ''} <span className="note">{day(l.at)}{l.paid ? ' · paid' : ''}</span></span><span className="num">{peso(l.amount)}</span></div>
@@ -281,7 +281,7 @@ function Bayad() {
   }
   return (
     <section className="card">
-      <h2>Bayad</h2>
+      <h2>Payouts</h2>
       {!k.payouts.length && <p className="note">No payouts yet. Your first one comes the Monday after your first sale.</p>}
       {k.payouts.map((p) => (
         <div key={p.id} className="card flat">

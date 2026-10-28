@@ -16,7 +16,7 @@ RIDES = [{"id": "ride1", "source": "strava", "name": "Sunday Morning Ride", "sta
                      {"id": "pass2", "passed_at": "2026-10-04T22:47:00Z", "manual": False, "distance_m": 30, "shoot_id": "s2", "place_label": None,
                       "pitikero": {"id": "k", "name": "Ridge Lens", "handle": "ridgelens", "price": 60}, "shoot_done": False, "count": 0}]},
          {"id": "ride2", "source": "strava", "name": "Tuesday Recovery Ride", "started_at": "2026-10-06T22:10:00Z", "strava_activity_id": 2, "passes": []}]
-SHOOT = {"id": "s1", "lat": 14.59472, "lon": 121.1675, "accuracy_m": 6, "pin_source": "phone", "place_label": "Taktak, pababa bago ang kanto",
+SHOOT = {"id": "s1", "lat": 14.59472, "lon": 121.1675, "accuracy_m": 6, "pin_source": "phone", "place_label": "Taktak, downhill before the bend",
          "checked_in_at": time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime(now - 3600)), "clock_offset_ms": 120000, "clock_checked": True,
          "first_shot_at": "2026-10-04T22:02:00Z", "last_shot_at": "2026-10-04T23:40:00Z", "photo_count": 742, "done_at": None}
 KITA = {"unpaid": 1850, "week_sales": 2400, "week_tips": 1450, "week_photos": 48, "week_tippers": 14,

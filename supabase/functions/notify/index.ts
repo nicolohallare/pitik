@@ -45,10 +45,10 @@ function emailHtml(r: Ride, link: string) {
   <table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 16px">
   <table width="100%" style="max-width:520px;background:#FBF8F2;border-radius:18px;padding:24px" cellpadding="0" cellspacing="0">
     <tr><td style="font:italic 600 28px Georgia,serif">pitik</td></tr>
-    <tr><td style="font:500 24px Georgia,serif;padding-top:12px">${r.is_followup ? 'May bagong pitik ka.' : 'Nakuhanan ka kaninang umaga.'}</td></tr>
+    <tr><td style="font:500 24px Georgia,serif;padding-top:12px">${r.is_followup ? 'New photos of you.' : 'You got shot this morning.'}</td></tr>
     <tr><td style="color:#4A443B;padding:6px 0 10px">${total} photo${total > 1 ? 's' : ''} of you from ${esc(joinNames(names))}${r.name ? ` on “${esc(r.name)}”` : ''}. Only you can see them.</td></tr>
     ${rows}
-    <tr><td style="padding-top:18px"><a href="${link}" style="display:inline-block;background:#B8441F;color:#fff;text-decoration:none;font-weight:600;padding:14px 22px;border-radius:14px">Tingnan lahat</a></td></tr>
+    <tr><td style="padding-top:18px"><a href="${link}" style="display:inline-block;background:#B8441F;color:#fff;text-decoration:none;font-weight:600;padding:14px 22px;border-radius:14px">See your photos</a></td></tr>
     <tr><td style="color:#6E655A;font-size:12px;padding-top:18px">The pitikero keeps 100% of the photo price and every tip. You got this because your Strava is connected to Pitik. Turn emails off anytime in your Pitik settings.</td></tr>
   </table></td></tr></table></body></html>`;
 }
@@ -86,8 +86,8 @@ Deno.serve(async (req) => {
 
     if (r.email && r.email_notify) {
       const subject = r.is_followup
-        ? 'May bagong pitik ka 📸'
-        : `Nakita ka ng ${names.length} pitikero${names.length > 1 ? 's' : ''} kaninang umaga 📸`;
+        ? 'New photos of you 📸'
+        : `${names.length} pitikero${names.length > 1 ? 's' : ''} caught you this morning 📸`;
       try { out.email = await sendEmail(r.email, subject, emailHtml(r, link)); }
       catch (e) { out.email = 'failed: ' + (e as Error).message; }
     }

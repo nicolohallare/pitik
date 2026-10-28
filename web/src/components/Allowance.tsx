@@ -13,7 +13,7 @@ const deadlineLabel = (iso: string) => new Date(iso).toLocaleString('en-PH', { w
 export function Checklist({ a }: { a: AllowanceDay }) {
   const items: [boolean, string][] = [
     [a.active, 'Account activated by the Pitik team'],
-    [a.checked_in && a.at_taktak, '"Nandito ako" with your phone\'s GPS at Taktak, 4–11am'],
+    [a.checked_in && a.at_taktak, '"I\'m here" with your phone\'s GPS at Taktak, 4–11am'],
     [a.photos >= a.min_photos, `${Math.min(a.photos, a.min_photos)} of ${a.min_photos} shots from that morning uploaded`],
   ];
   return (
@@ -52,10 +52,10 @@ export function AllowanceCard() {
         <>
           <p style={{ margin: 0 }}>Earn <b>{peso(current.amount)}</b> on <b>{dayLabel(current.day)}</b> by using Pitik that morning. It goes into your next GCash payout automatically.</p>
           <Checklist a={current} />
-          <p className="note">{current.qualifies ? 'All done! It will show in Kita within the hour.' : `Upload by ${deadlineLabel(current.deadline)}. Only real camera shots from that morning count.`}</p>
+          <p className="note">{current.qualifies ? 'All done! It will show in Earnings within the hour.' : `Upload by ${deadlineLabel(current.deadline)}. Only real camera shots from that morning count.`}</p>
         </>
       ) : <p className="note" style={{ margin: 0 }}>No trial Sunday coming up right now. We'll post the next one in the group.</p>}
-      {earned.map((d) => <p key={d.day} className="msg ok" style={{ margin: 0 }}>✓ {dayLabel(d.day)}: {peso(Number(d.awarded_amount))} added to your payout. Salamat!</p>)}
+      {earned.map((d) => <p key={d.day} className="msg ok" style={{ margin: 0 }}>✓ {dayLabel(d.day)}: {peso(Number(d.awarded_amount))} added to your payout. Thank you!</p>)}
     </section>
   );
 }
