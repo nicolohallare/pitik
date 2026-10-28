@@ -29,7 +29,13 @@ export function PhotoDownloads({ orderId }: { orderId?: string }) {
     })();
   }, [orderId]);
   if (!list) return <p className="note">Loading…</p>;
-  if (!list.length) return <p className="note">No photos yet. <Link to="/rider">Find yours</Link></p>;
+  if (!list.length) return (
+    <section className="connect-card">
+      <h3>Photos you buy show up here</h3>
+      <p className="note">Full size, yours to download and post. Start by finding the shots from your last ride.</p>
+      <Link className="btn sun" to="/rider">Find my photos</Link>
+    </section>
+  );
   return (
     <section className="stack">
       <div className="grid big">

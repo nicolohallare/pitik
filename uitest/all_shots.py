@@ -33,7 +33,7 @@ UPLOADS=[]; INSERTS=[]
 import os
 STATE={'connected': os.environ.get('NOSTRAVA') != '1', 'fresh': os.environ.get('FRESH') == '1'}
 def rpc(name, body):
-    return {"my_pitikero": PK, "my_strava": ({"athlete_name": "PongBikeRun [SP++TRPH] 🇵🇭" if STATE['fresh'] else "Nicolo H.", "write_ok": True} if STATE['connected'] else None), "my_rides": (RIDES if STATE['connected'] else []), "my_rides": ([] if STATE['fresh'] else RIDES),
+    return {"my_pitikero": (None if os.environ.get('NOPK')=='1' else PK), "my_strava": ({"athlete_name": "PongBikeRun [SP++TRPH] 🇵🇭" if STATE['fresh'] else "Nicolo H.", "write_ok": True} if STATE['connected'] else None), "my_rides": (RIDES if STATE['connected'] else []), "my_rides": ([] if STATE['fresh'] else RIDES),
             "photos_for_pass": photos if body.get("p_pass") == "pass1" else [], "shoots_on": [], "my_kita": KITA,
             "admin_balances": BAL, "my_purchases": []}.get(name, None)
 
@@ -75,7 +75,7 @@ async def main():
         async with async_playwright() as p:
             b = await p.chromium.launch()
             ctx = await b.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2, color_scheme=os.environ.get('SCHEME', 'light'))
-            await ctx.add_init_script(f"localStorage.setItem('sb-mock-auth-token', {json.dumps(json.dumps(SESSION))});")
+            if os.environ.get('NOAUTH') != '1': await ctx.add_init_script(f"localStorage.setItem('sb-mock-auth-token', {json.dumps(json.dumps(SESSION))});")
             await ctx.route('https://mock.supabase.co/**', handle)
             await ctx.route('https://fonts.googleapis.com/**', lambda r: r.abort())
             pg = await ctx.new_page()

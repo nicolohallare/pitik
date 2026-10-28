@@ -6,37 +6,41 @@ export default function Landing() {
   const { session } = useAuth();
   return (
     <Layout>
-      <section className="stack" style={{ paddingTop: 8 }}>
-        <span className="eyebrow">Taktak, Antipolo</span>
-        <h1>You rode by. You got shot.</h1>
-        <p className="lead">Pitik finds the roadside photos of you from the pitikeros at Taktak, using the ride you already record. No scrolling through FB albums, no Messenger.</p>
-        <div className="row">
-          <Link className="btn sun" to={session ? '/rider' : '/login?next=/rider'} style={{ flex: '1 1 200px' }}>Find my photos</Link>
-          <Link className="btn alt" to={session ? '/pitikero' : '/login?next=/pitikero'} style={{ flex: '1 1 200px' }}>I'm a pitikero</Link>
+      <section className="hero" aria-labelledby="hero-h">
+        <img src="/img/rider-taktak.webp" alt="A rider in a gold helmet speeding down the Taktak road" width={1100} height={1018} />
+        <div className="hero-text">
+          <h1 id="hero-h">You rode by. You got shot.</h1>
+          <p>Pitik finds your roadside photos from the pitikeros at Taktak, using the ride you already record. No more scrolling through FB albums.</p>
         </div>
       </section>
+      <div className="stack">
+        <Link className="btn sun" to={session ? '/rider' : '/login?next=/rider'}>Find my photos</Link>
+        <Link className="btn alt" to={session ? '/pitikero' : '/login?next=/pitikero'}>I'm a pitikero</Link>
+      </div>
 
-      <section className="card">
-        <span className="eyebrow">For riders</span>
-        <h2>Connect your Strava once.</h2>
-        <ol className="stack" style={{ margin: 0, paddingLeft: 20 }}>
-          <li>Every ride comes in on its own. Pitik checks if you passed a pitikero while they were shooting.</li>
-          <li>You get one message per ride: a line on your Strava activity (and an email, if you signed in with one), listing every pitikero who caught you.</li>
-          <li>You only see the few minutes around when you passed. Pick yours, add a tip, pay with GCash, Maya or card.</li>
+      <section aria-labelledby="how-h">
+        <h2 id="how-h" className="sec">How it works for riders</h2>
+        <ol className="road">
+          <li><b>Connect Strava once</b><span>Every ride comes in on its own. No Strava? Upload a GPX file or tell us when you passed.</span></li>
+          <li><b>Ride past Taktak</b><span>Pitik checks if you passed a pitikero while they were shooting.</span></li>
+          <li><b>Get one message per ride</b><span>A line on your Strava activity listing every pitikero who caught you.</span></li>
+          <li><b>Pick the ones you like</b><span>Previews are free. Add a tip if you want, then pay with GCash, Maya or card.</span></li>
         </ol>
-        <p className="note">No Strava? Upload a GPX from Garmin or Wahoo, or just tell us roughly when you passed.</p>
       </section>
 
-      <section className="card dark">
-        <span className="hand" style={{ fontSize: 30, color: '#F6E3C4' }}>no cuts</span>
-        <h2 style={{ color: 'var(--on-dark)' }}>Pitikeros keep 100%.</h2>
-        <p style={{ margin: 0 }}>You set your price (₱50 and up) and keep all of it, plus every tip. Riders pay a small Pitik fee on top. Paid to your GCash every Monday, with a reference number and receipt.</p>
-        <p className="note">Tap "I'm here" at your spot, shoot like you always do, upload when you're home.</p>
+      <section className="card dark pk">
+        <h2>Pitikeros keep 100%.</h2>
+        <ul className="facts">
+          <li><b>Your price</b><span>₱50 and up. All of it is yours, plus every tip.</span></li>
+          <li><b>Paid every Monday</b><span>Straight to your GCash, with a reference number.</span></li>
+          <li><b>Shoot like you always do</b><span>Tap "I'm here" at your spot, then upload when you're home.</span></li>
+        </ul>
+        <p className="note">Riders pay a small Pitik fee on top, so nothing comes out of your price.</p>
       </section>
 
-      <section className="card flat">
+      <section className="stack" style={{ gap: 6 }}>
         <h3>Privacy, plainly</h3>
-        <p className="note" style={{ color: 'var(--ink2)', fontSize: 14 }}>Pitik keeps only the moments your ride passed a pitikero, never your full route after matching. No face scanning. Photos of you are shown only to you. Disconnect Strava anytime.</p>
+        <p className="note" style={{ color: 'var(--ink2)', fontSize: 15 }}>Pitik keeps only the moments your ride passed a pitikero, never your full route. No face scanning. Photos of you are shown only to you. Disconnect Strava anytime.</p>
       </section>
     </Layout>
   );

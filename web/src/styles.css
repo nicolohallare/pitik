@@ -146,3 +146,12 @@ details > summary { list-style: none; justify-content: space-between; gap: 12px;
 details > summary::-webkit-details-marker { display: none; }
 details > summary::after { content: "+"; font: 400 22px/1 var(--body); color: var(--muted); }
 details[open] > summary::after { content: "–"; }
+.card.pk { padding: 22px 20px; gap: 16px; border-radius: 24px; }
+.card.pk h2 { color: var(--on-dark); font-size: 28px; font-weight: 600; }
+.facts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.facts li { display: flex; flex-direction: column; gap: 2px; padding: 12px 0; border-top: 1px solid rgba(251,248,242,.18); }
+.facts b { font-family: var(--display); font-weight: 600; font-size: 18px; color: #F6E3C4; }
+.facts span { color: #E3EBDF; font-size: 15px; line-height: 1.45; }
+.banner { border-radius: 20px; overflow: hidden; margin: 0 -4px; background: #2A241D; }
+.banner img { display: block; width: 100%; height: auto; aspect-ratio: 5 / 2; object-fit: cover; object-position: 40% 22%; }
+.eyebrow, .who { text-transform: none; letter-spacing: 0; font-size: 14px; }

@@ -61,7 +61,7 @@ function Onboard() {
       <div className="field"><label htmlFor="n">Name riders will see</label><input id="n" required maxLength={40} value={f.name} onChange={set('name')} placeholder="Jun Shots" /></div>
       <div className="field"><label htmlFor="h">Handle (for your Pitik link)</label><input id="h" maxLength={30} value={f.handle} onChange={set('handle')} placeholder="junshots" autoCapitalize="none" /></div>
       <div className="row">
-        <div className="field"><label htmlFor="p">Presyo bawat photo (₱50 pataas)</label><input id="p" type="number" inputMode="numeric" min={50} max={1000} value={f.price} onChange={set('price')} /></div>
+        <div className="field"><label htmlFor="p">Your price per photo (₱50 and up)</label><input id="p" type="number" inputMode="numeric" min={50} max={1000} value={f.price} onChange={set('price')} /></div>
       </div>
       <div className="row">
         <div className="field"><label htmlFor="g">GCash number</label><input id="g" inputMode="tel" required value={f.gcash_number} onChange={set('gcash_number')} placeholder="09171234567" /></div>

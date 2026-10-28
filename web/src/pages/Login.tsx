@@ -48,7 +48,11 @@ export default function Login() {
 
   return (
     <Layout>
-      <h1>{mode === 'create' ? 'Create your account' : 'Sign in'}</h1>
+      <div className="banner" aria-hidden="true"><img src="/img/rider-taktak.webp" alt="" width={1100} height={1018} /></div>
+      <div>
+        <h1>{mode === 'create' ? 'Create your account' : 'Sign in'}</h1>
+        <p className="lead">{next.startsWith('/pitikero') ? 'Join the pitikeros selling their Taktak shots on Pitik.' : 'See the photos pitikeros took of you at Taktak.'}</p>
+      </div>
       {mode === 'email' ? <EmailLogin next={next} back={() => setMode('signin')} /> : (
         <form className="card" onSubmit={submit}>
           <p className="note" style={{ margin: 0 }}>{mode === 'create'
