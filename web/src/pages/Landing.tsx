@@ -21,9 +21,9 @@ export default function Landing() {
       <section aria-labelledby="how-h">
         <h2 id="how-h" className="sec">How it works for riders</h2>
         <ol className="road">
-          <li><b>Connect Strava once</b><span>Every ride comes in on its own. No Strava? Upload a GPX file or tell us when you passed.</span></li>
-          <li><b>Ride past Taktak</b><span>Pitik checks if you passed a pitikero while they were shooting.</span></li>
-          <li><b>Get one message per ride</b><span>A line on your Strava activity listing every pitikero who caught you.</span></li>
+          <li><b>Record your ride as usual</b><span>On your bike computer, watch or phone.</span></li>
+          <li><b>Ride past Taktak</b><span>Pitikeros shoot riders every morning on the road to Taktak Falls and upload by noon.</span></li>
+          <li><b>Find your photos</b><span>Upload your ride file or tell us roughly when you passed. Pitik shows only the shots from those few minutes.</span></li>
           <li><b>Pick the ones you like</b><span>Previews are free. Add a tip if you want, then pay with GCash, Maya or card.</span></li>
         </ol>
       </section>

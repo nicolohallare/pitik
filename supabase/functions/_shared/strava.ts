@@ -35,15 +35,6 @@ export async function stravaGet(acc: StravaAccount, path: string) {
   return r.json();
 }
 
-export async function stravaPut(acc: StravaAccount, path: string, body: unknown) {
-  const t = await accessToken(acc);
-  const r = await fetch(API + path, {
-    method: 'PUT', headers: { Authorization: `Bearer ${t}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body),
-  });
-  if (!r.ok) throw new Error(`Strava PUT ${path} → ${r.status}`);
-  return r.json();
-}
-
 export const OUTDOOR = /ride|cycl|bike|gravel|mountain|handcycle|velomobile/i;
 
 /** Pull one activity's route and record the moments it passed a pitikero. Keeps only a thinned track, briefly. */
@@ -52,6 +43,7 @@ export async function processActivity(acc: StravaAccount, activityId: number, su
   if (!a) return { skipped: 'not found' };
   const type = String(a.sport_type ?? a.type ?? '');
   if (a.trainer || /virtual/i.test(type) || !OUTDOOR.test(type)) return { skipped: 'not an outdoor ride' };
+  if (a.private || a.visibility === 'only_me') return { skipped: 'private activity' };
   const streams = await stravaGet(acc, `/activities/${activityId}/streams?keys=latlng,time&key_by_type=true`);
   const ll: [number, number][] = streams?.latlng?.data ?? [];
   const tt: number[] = streams?.time?.data ?? [];
@@ -65,13 +57,4 @@ export async function processActivity(acc: StravaAccount, activityId: number, su
   });
   if (error) throw new Error(error.message);
   return data;
-}
-
-export const LINE_MARK = '📸 Pitik:';
-
-/** Add or replace our one line in the activity description, leaving the rider's own text alone. */
-export function mergeDescription(current: string | null | undefined, line: string): string {
-  const lines = String(current ?? '').split('\n').filter((l) => !l.trim().startsWith(LINE_MARK));
-  while (lines.length && !lines[lines.length - 1].trim()) lines.pop();
-  return (lines.length ? lines.join('\n') + '\n\n' : '') + line;
 }

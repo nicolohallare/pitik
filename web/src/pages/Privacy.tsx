@@ -8,7 +8,8 @@ export default function Privacy() {
       <section className="card">
         <h3>What Pitik keeps</h3>
         <ul className="stack" style={{ margin: 0, paddingLeft: 20 }}>
-          <li><b>Riders:</b> your mobile number (or email if you used one), and for each ride only the moments you passed a pitikero (time and spot). If you connect Strava, we read your rides to find those moments. A ride's route is kept for up to 3 days so late uploads can still be matched, then deleted.</li>
+          <li><b>Riders:</b> your mobile number (or email if you used one), and for each ride only the moments you passed a pitikero (time and spot). A ride's route is kept for up to 3 days so late uploads can still be matched, then deleted.</li>
+          <li><b>If you connect Strava:</b> we read your public and followers-only rides (never "Only You" rides) to find when you passed a pitikero. Everything that comes from Strava, including those moments, is deleted 7 days after the ride, or right away if you disconnect, make the ride private, or delete it on Strava. We never write to your Strava, never show your Strava data to anyone else, and never use it for ads or AI training.</li>
           <li><b>Pitikeros:</b> your name, price, GCash number and name (seen only by you and the Pitik team, for payouts), the spots where you checked in, and your photos.</li>
           <li><b>Payments:</b> handled by TechPay Philippines (BSP-licensed). Pitik never sees your card or wallet details.</li>
         </ul>
@@ -20,7 +21,7 @@ export default function Privacy() {
         </ul>
         <h3>Your choices</h3>
         <p style={{ margin: 0 }}>Disconnect Strava or turn off emails anytime in Account. To delete your account and data, <Link to="/support">message us</Link> and we'll do it within 7 days.</p>
-        <p className="note">Pitik is operated by Techwave. We follow the Philippine Data Privacy Act of 2012.</p>
+        <p className="note">Pitik is operated by Techwave. We follow the Philippine Data Privacy Act of 2012. See also our <Link to="/terms">Terms</Link>.</p>
       </section>
     </Layout>
   );

@@ -1,10 +1,8 @@
 // notify — runs every 15 minutes (pg_cron). For each ride that is ready, sends ONE message:
-//   • a line in the Strava activity description (edited, never duplicated)
 //   • one email listing every pitikero who caught the rider
 // At most one follow-up per ride if more shots land later. No SMS.
 // Called with header x-cron-secret (from Vault). Secrets: RESEND_API_KEY, EMAIL_FROM, APP_URL.
 import { admin, appUrl, env, json, manilaTime } from '../_shared/util.ts';
-import { LINE_MARK, mergeDescription, StravaAccount, stravaGet, stravaPut } from '../_shared/strava.ts';
 
 type Pass = { pitikero: string; passed_at: string; count: number; thumb: string | null };
 type Ride = {
@@ -49,7 +47,7 @@ function emailHtml(r: Ride, link: string) {
     <tr><td style="color:#4A443B;padding:6px 0 10px">${total} photo${total > 1 ? 's' : ''} of you from ${esc(joinNames(names))}${r.name ? ` on “${esc(r.name)}”` : ''}. Only you can see them.</td></tr>
     ${rows}
     <tr><td style="padding-top:18px"><a href="${link}" style="display:inline-block;background:#B8441F;color:#fff;text-decoration:none;font-weight:600;padding:14px 22px;border-radius:14px">See your photos</a></td></tr>
-    <tr><td style="color:#6E655A;font-size:12px;padding-top:18px">The pitikero keeps 100% of the photo price and every tip. You got this because your Strava is connected to Pitik. Turn emails off anytime in your Pitik settings.</td></tr>
+    <tr><td style="color:#6E655A;font-size:12px;padding-top:18px">The pitikero keeps 100% of the photo price and every tip. You got this because you have a Pitik account. Turn emails off anytime in your Pitik settings.</td></tr>
   </table></td></tr></table></body></html>`;
 }
 
@@ -68,21 +66,8 @@ Deno.serve(async (req) => {
     const { names, total } = summary(r);
     if (!total) continue;
     const link = `${app}/ride/${r.ride_id}`;
-    const line = `${LINE_MARK} ${total} photo${total > 1 ? 's' : ''} of you from ${joinNames(names)} → ${link}`;
+    const line = `${total} photo${total > 1 ? 's' : ''} of you from ${joinNames(names)} → ${link}`;
     const out: Record<string, unknown> = { ride: r.ride_id };
-
-    if (r.strava_activity_id) {
-      try {
-        const { data: acc } = await admin().from('strava_accounts').select('*').eq('user_id', r.user_id).maybeSingle();
-        if (acc && (acc as StravaAccount).write_ok) {
-          const a = await stravaGet(acc as StravaAccount, `/activities/${r.strava_activity_id}`);
-          if (a) {
-            await stravaPut(acc as StravaAccount, `/activities/${r.strava_activity_id}`, { description: mergeDescription(a.description, line) });
-            out.strava = 'updated';
-          }
-        } else out.strava = 'no write permission';
-      } catch (e) { out.strava = 'failed: ' + (e as Error).message; }
-    }
 
     if (r.email && r.email_notify) {
       const subject = r.is_followup
@@ -93,8 +78,8 @@ Deno.serve(async (req) => {
     }
 
     // If every channel we tried failed, try again on the next run (gives up after 4 tries)
-    const tried = [out.strava, out.email].filter((v) => v !== undefined && v !== 'no write permission' && !String(v).startsWith('skipped'));
-    const anyOk = !tried.length || tried.some((v) => v === 'updated' || v === 'sent');
+    const tried = [out.email].filter((v) => v !== undefined && !String(v).startsWith('skipped'));
+    const anyOk = !tried.length || tried.some((v) => v === 'sent');
     await admin().rpc('mark_notified', { p_ride: r.ride_id, p_line: line, p_ok: anyOk });
     results.push(out);
   }

@@ -37,9 +37,10 @@ export function Layout({ children, wide }: { children: ReactNode; wide?: boolean
       {children}
       <footer className="foot">
         <Link to="/privacy">Privacy</Link>
+        <Link to="/terms">Terms</Link>
         <Link to="/support">Support</Link>
         <Link to="/feedback">Feedback</Link>
-        <span>Pitik · Taktak, Antipolo</span>
+        <span>Pitik is operated by Techwave · Antipolo, Rizal</span>
       </footer>
     </div>
   );

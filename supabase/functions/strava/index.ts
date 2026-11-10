@@ -69,6 +69,12 @@ const later = (p: Promise<unknown>) => {
   if (typeof EdgeRuntime !== 'undefined') EdgeRuntime.waitUntil(safe);
 };
 
+/** Drop the Strava link and every ride that came from Strava for this rider (bought photos stay in their library). */
+async function forget(userId: string) {
+  await admin().from('strava_accounts').delete().eq('user_id', userId);
+  await admin().from('rides').delete().eq('user_id', userId).eq('source', 'strava');
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
   const url = new URL(req.url);
@@ -107,7 +113,7 @@ Deno.serve(async (req) => {
     if (!(await open(user.id))) return json({ error: 'Strava slots are full for now. Upload your ride file or tell us when you passed instead.' }, 503);
     const p = new URLSearchParams({
       client_id: env('STRAVA_CLIENT_ID'), response_type: 'code', approval_prompt: 'auto',
-      scope: 'read,activity:read_all,activity:write',
+      scope: 'read,activity:read',
       redirect_uri: `${FN_URL}?action=callback`, state: await makeState(user.id),
     });
     return json({ url: `https://www.strava.com/oauth/authorize?${p}` });
@@ -143,7 +149,7 @@ Deno.serve(async (req) => {
       user_id: user.id, athlete_id: j.athlete.id,
       athlete_name: [j.athlete.firstname, j.athlete.lastname].filter(Boolean).join(' ').slice(0, 80),
       access_token: j.access_token, refresh_token: j.refresh_token,
-      expires_at: new Date(j.expires_at * 1000).toISOString(), scope: sc, write_ok: sc.includes('activity:write'),
+      expires_at: new Date(j.expires_at * 1000).toISOString(), scope: sc, write_ok: false,
     };
     const { error } = await admin().from('strava_accounts').upsert(row, { onConflict: 'user_id' });
     if (error) return json({ error: 'Could not save the connection. Try again.' }, 500);
@@ -174,7 +180,7 @@ Deno.serve(async (req) => {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ client_id: env('STRAVA_CLIENT_ID'), client_secret: env('STRAVA_CLIENT_SECRET'), grant_type: 'refresh_token', refresh_token: acc.refresh_token }),
         });
-        if (r.status === 400 || r.status === 401) await admin().from('strava_accounts').delete().eq('user_id', acc.user_id);
+        if (r.status === 400 || r.status === 401) await forget(acc.user_id);
         else if (r.ok) {
           const j = await r.json();
           await admin().from('strava_accounts').update({ access_token: j.access_token, refresh_token: j.refresh_token, expires_at: new Date(j.expires_at * 1000).toISOString() }).eq('user_id', acc.user_id);
@@ -190,6 +196,7 @@ Deno.serve(async (req) => {
       }
       const upd = (ev.updates ?? {}) as Record<string, string>;
       if (ev.aspect_type === 'update' && Object.keys(upd).every((k) => ['title', 'description', 'private', 'type'].includes(k))) {
+        if (upd.private === 'true') { await admin().from('rides').delete().eq('strava_activity_id', activityId).eq('user_id', acc.user_id); return; }
         if (upd.title) await admin().from('rides').update({ name: upd.title.slice(0, 120) }).eq('strava_activity_id', activityId).eq('user_id', acc.user_id);
         return;
       }
@@ -214,7 +221,7 @@ Deno.serve(async (req) => {
         body: new URLSearchParams({ access_token: await accessToken(acc) }),
       });
     } catch { /* forget locally regardless */ }
-    await admin().from('strava_accounts').delete().eq('user_id', user.id);
+    await forget(user.id);
     return json({ ok: true });
   }
 

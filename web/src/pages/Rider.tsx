@@ -96,15 +96,10 @@ export default function Rider() {
       <span><b>Strava connected</b>{first ? <span className="note"> as {first}</span> : null}</span>
       <button className="link small" disabled={busy} onClick={sync}>{busy ? 'Checking…' : 'Check my rides'}</button>
     </div>
-  ) : stravaReady === false ? (
-    <div className="connect-card">
-      <h3>Strava slots are full for now</h3>
-      <p className="note">Upload your ride file or tell us when you passed, below.</p>
-    </div>
-  ) : (
+  ) : stravaReady === false ? null : (
     <div className="connect-card">
       <h3>Connect Strava once</h3>
-      <p className="note">Pitik checks when you passed a pitikero. We keep only those moments, never your full route.</p>
+      <p className="note">Pitik reads your public and followers-only rides to see when you passed a pitikero. Those moments are deleted after 7 days, and we never write to your Strava.</p>
       <ConnectWithStrava disabled={busy} onClick={connect} />
     </div>
   );
@@ -122,6 +117,7 @@ export default function Rider() {
       ) : <h1>Your rides</h1>}
 
       {stravaBlock}
+      {stravaReady === false && !strava && <NoStrava onAdded={load} primary />}
       <Msg text={msg?.t} kind={msg?.k} />
 
       {credit > 0 && (
@@ -137,9 +133,10 @@ export default function Rider() {
         <section aria-labelledby="next-h">
           <h2 id="next-h" className="sec">What happens next</h2>
           <ol className="road">
-            <li><b>Ride past the pitikeros</b><span>Any morning at Taktak. {strava ? 'Strava records when you passed. Nothing else to do.' : 'Your ride app records when you passed.'}</span></li>
-            <li><b>They upload by noon</b><span>Each pitikero posts their morning shots the same day.</span></li>
-            <li><b>Your shots appear here</b><span>{strava?.write_ok !== false ? 'We also add one line to that ride on Strava. ' : ''}Previews are free. Buy only the ones you like, from ₱50. The pitikero keeps all of it.</span></li>
+            <li><b>Ride past the pitikeros</b><span>Any morning at Taktak. {strava ? 'Strava records when you passed. Nothing else to do.' : 'Record it on your bike computer or phone as usual.'}</span></li>
+            {!strava && <li><b>Upload the ride file</b><span>Or just tell us roughly when you passed. Either way takes a few seconds.</span></li>}
+            <li><b>Pitikeros upload by noon</b><span>Each pitikero posts their morning shots the same day.</span></li>
+            <li><b>Your shots appear here</b><span>Previews are free. Buy only the ones you like, from ₱50. The pitikero keeps all of it.</span></li>
           </ol>
         </section>
       )}
@@ -153,7 +150,7 @@ export default function Rider() {
         </details>
       )}
 
-      <NoStrava onAdded={load} open={stravaReady === false && !strava} />
+      {!(stravaReady === false && !strava) && <NoStrava onAdded={load} />}
       <div className="between">
         <Link to="/photos" className="note">Your purchased photos</Link>
         {strava && <PoweredByStrava size={14} />}
@@ -175,7 +172,7 @@ function RideCard({ r }: { r: RideRow }) {
   );
 }
 
-function NoStrava({ onAdded, open }: { onAdded: () => void; open?: boolean }) {
+function NoStrava({ onAdded, primary }: { onAdded: () => void; primary?: boolean }) {
   const nav = useNavigate();
   const [d, setD] = useState(dateInput());
   const [shoots, setShoots] = useState<{ id: string; place_label: string | null; first_shot_at: string; last_shot_at: string; photo_count: number; pitikero: { name: string } }[]>([]);
@@ -210,13 +207,38 @@ function NoStrava({ onAdded, open }: { onAdded: () => void; open?: boolean }) {
     setBusy(false);
   }
 
-  return (
-    <details className="card flat" open={open}>
-      <summary style={{ cursor: 'pointer', minHeight: 44, display: 'flex', alignItems: 'center', fontWeight: 600 }}>Other ways to find your photos</summary>
-      <div className="stack" style={{ paddingTop: 10 }}>
-        <div className="pick"><div className="btn alt small" aria-hidden="true">{busy ? 'Reading…' : 'Upload a ride file (GPX from Garmin, Wahoo, Coros)'}</div>
+  if (primary) return (
+    <section className="connect-card" aria-labelledby="find-h">
+      <h3 id="find-h">Find your photos</h3>
+      <p className="note">Upload the ride you recorded, or tell us roughly when you passed. No account linking needed.</p>
+      <div className="stack" style={{ paddingTop: primary ? 0 : 10 }}>
+        <div className="pick"><div className={primary ? 'btn sun' : 'btn alt small'} aria-hidden="true">{busy ? 'Reading…' : 'Upload my ride file (GPX)'}</div>
           <input type="file" accept=".gpx,.tcx,application/gpx+xml,application/xml,text/xml" aria-label="Upload a GPX ride file" onChange={(e) => { gpx(e.target.files?.[0]); e.target.value = ''; }} /></div>
-        <p className="note" style={{ textAlign: 'center' }}>or tell us when you passed</p>
+        <p className="note">On strava.com, open your ride, tap ⋯ and choose Export GPX. Garmin, Wahoo and Coros files work too.</p>
+        <p className="note" style={{ textAlign: 'center', marginTop: 4 }}>or tell us when you passed</p>
+        <div className="row">
+          <div className="field"><label htmlFor="nd">Date</label><input id="nd" type="date" value={d} max={dateInput()} onChange={(e) => setD(e.target.value)} /></div>
+          <div className="field"><label htmlFor="nt">I passed around</label><input id="nt" type="time" value={t} onChange={(e) => setT(e.target.value)} /></div>
+        </div>
+        {shoots.length ? (
+          <div className="field"><label htmlFor="ns">Which pitikero?</label>
+            <select id="ns" value={pick} onChange={(e) => setPick(e.target.value)}>
+              {shoots.map((s) => <option key={s.id} value={s.id}>{s.pitikero.name}{s.place_label ? ` · ${s.place_label}` : ''} · {time(s.first_shot_at)}–{time(s.last_shot_at)}</option>)}
+            </select></div>
+        ) : <p className="note">No pitikeros uploaded shots on that day yet.</p>}
+        <button className="btn small" disabled={!pick || busy} onClick={addManual}>Show shots around that time</button>
+        <Msg text={err} kind="err" />
+      </div>
+    </section>
+  );
+  return (
+    <details className="card flat">
+      <summary style={{ cursor: 'pointer', minHeight: 44, display: 'flex', alignItems: 'center', fontWeight: 600 }}>Other ways to find your photos</summary>
+      <div className="stack" style={{ paddingTop: primary ? 0 : 10 }}>
+        <div className="pick"><div className={primary ? 'btn sun' : 'btn alt small'} aria-hidden="true">{busy ? 'Reading…' : 'Upload my ride file (GPX)'}</div>
+          <input type="file" accept=".gpx,.tcx,application/gpx+xml,application/xml,text/xml" aria-label="Upload a GPX ride file" onChange={(e) => { gpx(e.target.files?.[0]); e.target.value = ''; }} /></div>
+        <p className="note">On strava.com, open your ride, tap ⋯ and choose Export GPX. Garmin, Wahoo and Coros files work too.</p>
+        <p className="note" style={{ textAlign: 'center', marginTop: 4 }}>or tell us when you passed</p>
         <div className="row">
           <div className="field"><label htmlFor="nd">Date</label><input id="nd" type="date" value={d} max={dateInput()} onChange={(e) => setD(e.target.value)} /></div>
           <div className="field"><label htmlFor="nt">I passed around</label><input id="nt" type="time" value={t} onChange={(e) => setT(e.target.value)} /></div>

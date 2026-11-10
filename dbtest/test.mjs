@@ -26,9 +26,9 @@ create schema vault;
 create table vault.secrets (name text primary key, secret text);
 create view vault.decrypted_secrets as select name, secret as decrypted_secret from vault.secrets;
 insert into vault.secrets values ('pitik_cron_secret', 'a-long-enough-cron-secret-value');
-create schema cron; create function cron.schedule(a text, b text, c text) returns bigint language sql as $$ select 1::bigint $$;
+create schema cron; create function cron.schedule(a text, b text, c text) returns bigint language sql as $$ select 1::bigint $$; create function cron.unschedule(a text) returns boolean language sql as $$ select true $$;
 `);
-for (const f of ['20261007000001_pitik_core.sql', '20261007000002_storage.sql', '20261009000001_phone_login.sql', '20261009000002_trial_allowance.sql']) {
+for (const f of ['20261007000001_pitik_core.sql', '20261007000002_storage.sql', '20261009000001_phone_login.sql', '20261009000002_trial_allowance.sql', '20261028000001_rider_credit_cap.sql', '20261110000001_strava_retention.sql']) {
   try { await db.exec(readFileSync('../supabase/migrations/' + f, 'utf8').replace('create extension if not exists pgcrypto;', '')); console.log('applied', f); }
   catch (e) { console.error('FAILED', f, e.message); process.exit(1); }
 }
@@ -303,6 +303,16 @@ await q(`select award_allowances()`);
 ok((await q(`select count(*)::int n from ledger where pitikero_id = $1 and kind = 'allowance'`, [PK3]))[0].n === 0, 'not earned when checked in 11 km from Taktak');
 const adm = (await as(A, () => q(`select admin_allowances(null) r`)))[0].r;
 ok(adm.day === tday && adm.rows.some(r => r.name === 'Kalye' && r.awarded), 'admin sees who earned it');
+
+console.log('Strava retention');
+const RR = uuid();
+await q(`insert into auth.users values ($1,'ret@example.com')`, [RR]);
+const oldT = new Date(Date.now() - 9 * 86400e3).toISOString(), newT = new Date(Date.now() - 2 * 86400e3).toISOString();
+await q(`insert into rides (user_id,source,strava_activity_id,started_at,ended_at) values ($1,'strava',5001,$2,$2),($1,'strava',5002,$3,$3),($1,'gpx',null,$2,$2)`, [RR, oldT, newT]);
+await expectErr(as(RR, () => q(`select purge_strava_rides()`)), 'rider cannot run the purge');
+const purged = (await q(`select purge_strava_rides() n`))[0].n;
+const left = await q(`select source, strava_activity_id::int a from rides where user_id = $1 order by 1,2`, [RR]);
+ok(purged >= 1 && left.length === 2 && left.some(r => r.a === 5002) && left.some(r => r.source === 'gpx'), 'Strava rides older than 7 days deleted; recent and GPX rides kept');
 
 console.log(fails ? `\n${fails} FAILED, ${passes} passed` : `\nall ${passes} passed`);
 process.exit(fails ? 1 : 0);

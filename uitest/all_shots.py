@@ -50,7 +50,7 @@ async def handle(route):
         INSERTS.append(json.loads(req.post_data))
         return await route.fulfill(status=201, body='')
     if '/functions/v1/strava' in u:
-        return await route.fulfill(json={"connected": STATE['connected'], "configured": True})
+        return await route.fulfill(json={"connected": STATE["connected"], "configured": os.environ.get("FULL") != "1"})
     if '/rest/v1/rpc/' in u:
         name = u.split('/rest/v1/rpc/')[1].split('?')[0]
         body = json.loads(req.post_data or '{}')

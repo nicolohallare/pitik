@@ -16,6 +16,7 @@ import Account from './pages/Account';
 import Feedback from './pages/Feedback';
 import Privacy from './pages/Privacy';
 import Support from './pages/Support';
+import Terms from './pages/Terms';
 import NotFound from './pages/NotFound';
 
 export default function App() {
@@ -38,6 +39,7 @@ export default function App() {
             <Route path="/feedback" element={<Feedback />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/support" element={<Support />} />
+            <Route path="/terms" element={<Terms />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           </Suspense>
